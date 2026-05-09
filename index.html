@@ -857,6 +857,283 @@ function updateDataCount(){
   document.getElementById('data-count').textContent=`${total.toLocaleString()}개 코드 탑재`;
 }
 
+
+
+/* =============================================================
+ * v1.2 Precision Patch: 분류체계별 게이트/코드 매핑 재정의
+ * - 6T ST/IT/ET 약어 부분일치 방지
+ * - 적용분야의 '환경하/운용 환경' 오판 방지
+ * - 국가전략기술 코드 매핑 오류 보정: 제조=11, 모빌리티=03, 바이오=05
+ * - 생산계획/일정계획/혼합흐름공정/스케줄링 논문 케이스 보정
+ * ============================================================= */
+const PRECISION_STOPWORDS=new Set([
+  '기술','개발','연구','과제','사업','시스템','기반','활용','적용','구축','플랫폼','서비스','기능','성능','개선','분석','및','또는','위한','통한','관련','기타','자동','고도화',
+  '산업','공공','분야','환경','단계','제품','문제','방법','결과','논문','모형','데이터','소프트웨어','algorithm','system','model','method',
+  'it','bt','nt','st','et','ct','sw','s/w'
+]);
+const PRECISION_DOMAINS=[
+  {id:'prod_sched',label:'생산계획·스케줄링',requires:['생산계획','일정계획','스케줄','혼합흐름','flow shop','makespan','tardiness','throughput','목표계획법','휴리스틱','유전자 알고리즘','nsga','생산관리','공정모델링','시뮬레이션','재방문','병렬설비','로트'],terms:['생산계획','일정계획','스케줄','스케줄링','혼합흐름공정','flow shop','병렬설비','재방문','재공','재고','throughput','delayed customer demand','makespan','tardiness','목표계획법','선형계획','휴리스틱','파레토','유전자 알고리즘','nsga','minkowski','로트','생산관리','공정모델링','시뮬레이션','최적화','계량분석'],boosts:{
+    nationalScience:{codes:['EA0201','EA0207','EA0209','NA0503','HG0432','HG0434'],prefixes:['EA02']},
+    sixT:{codes:['010316'],prefixes:['010300']},
+    strategicTech:{codes:['1105'],prefixes:['11']},
+    industrialTech:{codes:['700202','700203','700104','101403'],prefixes:['7002','7001']},
+    applicationField:{codes:['Y16']},
+    newIndustry12:{codes:['T001912']}
+  }},
+  {id:'elec_display',label:'전자·반도체·디스플레이 제조',requires:['pcb','반도체','웨이퍼','tft','lcd','디스플레이','전자산업','전자부품'],terms:['pcb','반도체','웨이퍼','반도체 조립','tft','tft-lcd','lcd','디스플레이','전자산업','전자부품','영상 음향 통신장비'],boosts:{
+    nationalScience:{codes:['ED1001','ED1002','ED0201','ED0202','ED0203','ED0205'],prefixes:['ED10','ED02']},
+    sixT:{codes:['010112','010316'],prefixes:['010100','010300']},
+    strategicTech:{codes:['0106','0108'],prefixes:['01']},
+    industrialTech:{codes:['201001','200200','200201','200202','200203','200205'],prefixes:['2010','2002']},
+    applicationField:{codes:['Y08']},
+    newIndustry12:{codes:['T001902','T001912']}
+  }},
+  {id:'ai_core',label:'AI·SW',requires:['ai','인공지능','머신러닝','딥러닝','llm','vlm','생성형','컴퓨터비전','자연어','학습모델'],terms:['ai','인공지능','머신러닝','딥러닝','llm','vlm','대형언어모델','비전언어모델','생성형','컴퓨터비전','자연어','학습모델','신경망','rag'],boosts:{
+    nationalScience:{codes:['EE0108','EE0102','EE0202'],prefixes:['EE01','EE02']},
+    sixT:{codes:['010314','010316'],prefixes:['010300']},
+    strategicTech:{codes:['0901','0902','0903','0904'],prefixes:['09']},
+    industrialTech:{codes:['300802','300804','300805'],prefixes:['3008']},
+    applicationField:{codes:['Y15']},
+    newIndustry12:{codes:['T001901']}
+  }},
+  {id:'ai_chip',label:'AI반도체·온디바이스',requires:['npu','ai반도체','인공지능 반도체','시스템반도체','soc','asic','온디바이스','엣지','임베디드'],terms:['npu','ai반도체','인공지능 반도체','시스템반도체','soc','asic','칩','가속기','저전력','온디바이스','on-device','on device','엣지','edge','디바이스','임베디드','양자화','프루닝','경량화'],boosts:{
+    nationalScience:{codes:['ED0406','ED0407','EE0201','EE0108'],prefixes:['ED04','EE02']},
+    sixT:{codes:['010112','010316'],prefixes:['010100','010300']},
+    strategicTech:{codes:['0102','0104','0108'],prefixes:['01']},
+    industrialTech:{codes:['200406','200407','300801'],prefixes:['2004','3008']},
+    applicationField:{codes:['Y08']},
+    newIndustry12:{codes:['T001902','T001901']}
+  }},
+  {id:'bio_drug',label:'바이오·신약',requires:['바이오','신약','의약품','단백질','세포','유전체','제약','후보물질'],terms:['바이오','신약','의약품','바이오의약품','단백질','세포','배양','유전체','정밀의료','admet','약물','제약','후보물질','항체','임상','의료'],boosts:{
+    nationalScience:{codes:['LC0301','LC0302','LC0303','LC0304','LC0305','LC0306','LC0307','LC0308','LC0399','LA0204','LA0206'],prefixes:['LC03','LC04','LA02','LA03']},
+    sixT:{codes:['020211','020212','020213','020214'],prefixes:['020200','020000']},
+    strategicTech:{codes:['0501','0502','0503','0504'],prefixes:['05']},
+    industrialTech:{codes:['500100','500200','500300','500400'],prefixes:['5001','5002','5003','5004']},
+    applicationField:{codes:['Y06','X02','Y18']},
+    newIndustry12:{codes:['T001906','T001907']}
+  }},
+  {id:'space',label:'우주항공·해양',requires:['우주','항공','위성','저궤도','우주정거장','미세중력','발사체','탑재체','uav','드론'],terms:['우주','항공','위성','저궤도','우주정거장','프리플라이어','미세중력','발사체','탑재체','궤도','비행','해양','드론','uav'],boosts:{
+    nationalScience:{codes:['ND1201','ND1202','ND1203','ND1214','EA1101','EA1102','EA1103','EA1104','EA1199'],prefixes:['ND12','EA11']},
+    sixT:{codes:['040411','040312'],prefixes:['040300','040400','040000']},
+    strategicTech:{codes:['0602','0603','0604','0605'],prefixes:['06']},
+    industrialTech:{codes:['100801','100802','100803','100804','100805','100809'],prefixes:['1008']},
+    applicationField:{codes:['X06','X03','Y11']},
+    newIndustry12:{codes:['T001909']}
+  }},
+  {id:'mobility',label:'모빌리티·교통',requires:['모빌리티','자율주행','자동차','차량','교통','도로','its','스마트교차로','보행자'],terms:['모빌리티','자율주행','차량','자동차','교통','도로','its','스마트교차로','보행자','돌발상황','운송','물류','uam','도심항공교통'],boosts:{
+    nationalScience:{codes:['EI0301','EI0302','EI0401','EI0404','EI0701','EI0702','EA0208'],prefixes:['EI03','EI04','EI07']},
+    sixT:{codes:['010211','010214','040312'],prefixes:['010200']},
+    strategicTech:{codes:['0301','0302','0303'],prefixes:['03']},
+    industrialTech:{codes:['100207','100212','300102'],prefixes:['1002']},
+    applicationField:{codes:['X08','Y11']},
+    newIndustry12:{codes:['T001905']}
+  }},
+  {id:'robot_mfg',label:'로봇·제조',requires:['로봇','자동화','스마트팩토리','센서','검사','품질','설비','공장','제조'],terms:['로봇','자동화','스마트팩토리','센서','검사','품질','생산','설비','제어','공장','제조','공정'],boosts:{
+    nationalScience:{codes:['EA0501','EA0502','EA0503','EA0504','EA0505','EA0201','EA0209'],prefixes:['EA05','EA02']},
+    sixT:{codes:['010115','010316'],prefixes:['010100','010300']},
+    strategicTech:{codes:['1101','1102','1103','1104','1105'],prefixes:['11']},
+    industrialTech:{codes:['100501','100502','100507','100105','100110','101403'],prefixes:['1005','1001','1014']},
+    applicationField:{codes:['Y10','Y08','Y09']},
+    newIndustry12:{codes:['T001904','T001912']}
+  }},
+  {id:'energy_env',label:'에너지·환경',requires:['에너지','수소','배터리','이차전지','ess','연료전지','신재생','탄소','온실가스','재활용','폐기물','오염','친환경'],terms:['에너지','수소','배터리','이차전지','ess','연료전지','신재생','태양광','풍력','탄소','온실가스','환경오염','재활용','폐기물','친환경','전력','스마트그리드','핵융합'],boosts:{
+    nationalScience:{codes:['EG0201','EG0202','EG0301','EG0302','EG0501','EG0601','EH1201'],prefixes:['EG02','EG03','EG05','EG06','EH']},
+    sixT:{codes:['050111','050211','050311','050411'],prefixes:['050000','050100','050200','050300']},
+    strategicTech:{codes:['0201','0202','0203','0204','0701','0702','0703','0401','0402'],prefixes:['02','07','04']},
+    industrialTech:{codes:['600100','600200','600300','600500','600600','800205'],prefixes:['6001','6002','6003','6005','6006','8002']},
+    applicationField:{codes:['X05','X09','Y12','Y13']},
+    newIndustry12:{codes:['T001910','T001911']}
+  }}
+];
+function preciseContainsAny(text,terms){const allN=normalizeText(text);return terms.some(t=>isExactTokenOrPhrase({allN},t));}
+function isExactTokenOrPhrase(ctx,term){
+  const t=normalizeText(term); if(!t)return false;
+  // 짧은 영문 약어(IT/ST/AI/AR/ESS/TFT/LCD/NPU 등)는 반드시 토큰 단위로만 매칭
+  if(t.length<=4 && /^[a-z0-9+.-]+$/.test(t)) return new RegExp(`(^|[^a-z0-9])${t.replace(/[.*+?^${}()|[\]\]/g,'\\$&')}([^a-z0-9]|$)`).test(ctx.allN);
+  return ctx.allN.includes(t);
+}
+function classifyProjectIntent(ctx){
+  return {
+    productionScheduling: preciseContainsAny(ctx.allN,['생산계획','일정계획','스케줄','스케줄링','혼합흐름공정','flow shop','makespan','tardiness','throughput','목표계획법','휴리스틱','유전자 알고리즘','nsga','생산관리','공정모델링','재방문','병렬설비']),
+    electronicsDisplay: preciseContainsAny(ctx.allN,['pcb','반도체','웨이퍼','반도체 조립','tft','tft-lcd','lcd','디스플레이','전자산업','전자부품']),
+    realEnvironmentOnly: /운용 환경|실험 환경|유사 환경|공정 환경|현장 환경|환경하|생산.*환경/.test(ctx.allN),
+    envSubstantive: preciseContainsAny(ctx.allN,['환경오염','폐기물','재활용','온실가스','탄소','배출','친환경','수질','대기오염','토양오염','정화','환경복원','오염물질']),
+    infoServiceExplicit: preciseContainsAny(ctx.allN,['정보서비스','방송통신','클라우드 서비스','saas','api 서비스','플랫폼 서비스','소프트웨어 서비스','데이터 서비스','상용 플랫폼']),
+    nuclearExplicit: preciseContainsAny(ctx.allN,['원자력','원전','smr','소형모듈형원자로','핵연료','방사성','폐기물관리']),
+    aerospaceExplicit: preciseContainsAny(ctx.allN,['우주','항공','위성','저궤도','우주정거장','발사체','탑재체','uav','드론','비행기기']),
+    contentExplicit: preciseContainsAny(ctx.allN,['콘텐츠','문화','게임','미디어','방송','vr','ar','xr','가상현실','메타버스'])
+  };
+}
+function buildCtx(title,desc){
+  const titleN=normalizeText(title), descN=normalizeText(desc), allN=normalizeText(title+' '+desc);
+  const titleTokens=tokenize(title).filter(t=>!PRECISION_STOPWORDS.has(t));
+  const descTokens=tokenize(desc).filter(t=>!PRECISION_STOPWORDS.has(t));
+  const tokenWeights=new Map();
+  titleTokens.forEach(t=>tokenWeights.set(t,(tokenWeights.get(t)||0)+3.2));
+  descTokens.forEach(t=>tokenWeights.set(t,(tokenWeights.get(t)||0)+1.0));
+  const active=PRECISION_DOMAINS.map(p=>{
+    const requiredHit=(p.requires||[]).some(term=>isExactTokenOrPhrase({allN},term));
+    let raw=0,hits=[];
+    if(!requiredHit) return {...p,strength:0,hits:[]};
+    p.terms.forEach(term=>{
+      const tn=normalizeText(term); if(!tn)return;
+      if(isExactTokenOrPhrase({allN:titleN},term)){raw+=3.2;hits.push(term);}
+      else if(isExactTokenOrPhrase({allN:descN},term)){raw+=1.1;hits.push(term);}
+    });
+    return {...p,strength:raw,hits:unique(hits).slice(0,6)};
+  }).filter(p=>p.strength>0).sort((a,b)=>b.strength-a.strength);
+  active.forEach(p=>p.hits.forEach(h=>{const hn=normalizeText(h);if(hn.length>=2)tokenWeights.set(hn,(tokenWeights.get(hn)||0)+2.2);}));
+  const intent=classifyProjectIntent({title,desc,titleN,descN,allN,tokenWeights,active});
+  return {title,desc,titleN,descN,allN,tokenWeights,active,intent};
+}
+function segmentUsable(seg){
+  const s=normalizeText(seg);
+  if(!s || s.length<2) return false;
+  if(PRECISION_STOPWORDS.has(s)) return false;
+  if(['it','bt','nt','st','et','ct','공공','산업'].includes(s)) return false;
+  if(s.length<=2 && /^[a-z]+$/.test(s)) return false;
+  return true;
+}
+function domainBoostFor(key,item,ctx){
+  let score=0,ev=[];
+  const code=String(item.code||''), hay=normalizeText(`${item.name} ${item.fullName} ${item.code}`);
+  ctx.active.forEach(p=>{
+    const b=(p.boosts&&p.boosts[key])||{};
+    const strength=Math.min(4,p.strength)/4;
+    if((b.codes||[]).includes(code)){score+=120*strength;ev.push(p.label);}
+    if((b.prefixes||[]).some(px=>code.startsWith(px))){score+=60*strength;ev.push(p.label);}
+    if((b.terms||[]).some(t=>hay.includes(normalizeText(t)))){score+=35*strength;ev.push(p.label);}
+  });
+  return {score,ev:unique(ev)};
+}
+function applyIntentBoost(key,item,ctx,score,ev){
+  const code=String(item.code||'');
+  const I=ctx.intent;
+  function add(s,e){score+=s;if(e)ev.push(e);}
+  function mult(m,e){score*=m;if(e)ev.push(e);}
+
+  // 생산계획/일정계획/혼합흐름공정: 운영·제조 최적화로 강제 보정
+  if(I.productionScheduling){
+    if(key==='nationalScience'){
+      if(['EA0201','EA0207','EA0209'].includes(code)) add(150,'정밀보정:생산계획/일정계획');
+      if(['NA0503','HG0432','HG0434'].includes(code)) add(80,'정밀보정:최적화/시뮬레이션');
+      if(['EE0201','EE0202'].includes(code)) mult(0.25,'감점:SW 일반분류 아님');
+    }
+    if(key==='sixT'){
+      if(code==='010316') add(280,'정밀보정:정보처리/SW 방법론');
+      if(code==='010300') add(25,'정밀보정:정보처리/SW 대분류');
+      if(code.startsWith('04')&&!I.aerospaceExplicit) mult(0.02,'감점:우주항공 맥락 없음');
+      if(code.startsWith('05')&&!I.envSubstantive) mult(0.08,'감점:청정생산/환경 맥락 아님');
+      if(code==='060111'&&!I.contentExplicit) mult(0.05,'감점:콘텐츠/VR 맥락 없음');
+    }
+    if(key==='applicationField'){
+      if(I.electronicsDisplay && code==='Y08') add(220,'정밀보정:TFT-LCD/PCB/반도체 제조 적용');
+      if(code==='Y16') add(55,'정밀보정:계획·알고리즘 연구');
+      if(code==='Y15'&&!I.infoServiceExplicit) mult(0.08,'감점:정보서비스업 목적 아님');
+      if(code==='X09'&&!I.envSubstantive) mult(0.02,'감점:환경은 공정/운용 맥락');
+    }
+    if(key==='strategicTech'){
+      if(code==='1105') add(200,'정밀보정:제조 계획/시뮬레이션');
+      if(code.startsWith('04')&&!I.nuclearExplicit) mult(0.01,'감점:원자력 맥락 없음');
+      if(code.startsWith('03')&&!preciseContainsAny(ctx.allN,['자율주행','자동차','모빌리티','uam','도심항공교통'])) mult(0.15,'감점:모빌리티 맥락 약함');
+      if(code.startsWith('09')&&!preciseContainsAny(ctx.allN,['ai','인공지능','머신러닝','딥러닝','llm','vlm'])) mult(0.12,'감점:AI 핵심기술 아님');
+    }
+    if(key==='industrialTech'){
+      if(['700202','700203','700104','101403'].includes(code)) add(150,'정밀보정:생산관리/시뮬레이션');
+      if(I.electronicsDisplay && ['201001','200200','200201','200202','200203','200205'].includes(code)) add(70,'정밀보정:디스플레이/반도체 제조');
+      if(['300801','300802','300804'].includes(code)&&!preciseContainsAny(ctx.allN,['임베디드','ai','인공지능','소프트웨어 제품','플랫폼 서비스'])) mult(0.10,'감점:SW 구현기술 아님');
+    }
+    if(key==='newIndustry12'){
+      if(code==='T001912') add(160,'정밀보정:첨단제조');
+      if(code==='T001901'&&!preciseContainsAny(ctx.allN,['ai','인공지능','머신러닝','딥러닝'])) mult(0.1,'감점:AI 핵심 아님');
+    }
+  }
+
+  // 공통 네거티브 게이트
+  if(key==='sixT'){
+    if(code==='040312'&&!I.aerospaceExplicit) mult(0.01,'감점:UAV/항공 아님');
+    if(code.startsWith('04')&&!I.aerospaceExplicit) mult(0.05,'감점:ST 맥락 없음');
+    if(code.startsWith('05')&&!I.envSubstantive&&!preciseContainsAny(ctx.allN,['에너지','수소','연료전지','배터리','이차전지'])) mult(0.10,'감점:ET 맥락 없음');
+    if(code.startsWith('06')&&!I.contentExplicit) mult(0.15,'감점:CT 맥락 없음');
+  }
+  if(key==='strategicTech'){
+    if(code.startsWith('04')&&!I.nuclearExplicit) mult(0.01,'감점:원자력 맥락 없음');
+    if(code.startsWith('06')&&!I.aerospaceExplicit) mult(0.12,'감점:우주항공 맥락 없음');
+    if(code.startsWith('05')&&!preciseContainsAny(ctx.allN,['바이오','신약','의약품','세포','유전자','제약','헬스케어'])) mult(0.12,'감점:바이오 맥락 없음');
+  }
+  if(key==='applicationField'){
+    if(code==='X09'&&!I.envSubstantive) mult(0.02,'감점:환경 적용처 아님');
+    if(code==='Y15'&&!I.infoServiceExplicit&&!preciseContainsAny(ctx.allN,['정보서비스','방송통신','클라우드','saas','플랫폼 서비스'])) mult(0.12,'감점:정보서비스업 적용처 아님');
+    if(code==='Y16'&&!preciseContainsAny(ctx.allN,['컨설팅','시험 서비스','분석 서비스','기술서비스','연구서비스','수탁','엔지니어링 서비스','계량분석','시뮬레이션'])) mult(0.55,'감점:서비스업 명시 약함');
+  }
+  return {score,ev:unique(ev).slice(0,10)};
+}
+function scoreCandidate(key,item,ctx){
+  const nameN=normalizeText(item.name), fullN=normalizeText(item.fullName), hay=normalizeText(`${item.name} ${item.fullName} ${item.code}`);
+  let score=0,ev=[];
+  const code=String(item.code||'');
+  if(ctx.allN.includes(normalizeText(code)) && code.length>=3){score+=120;ev.push('코드 직접일치');}
+  if(nameN.length>=2 && !PRECISION_STOPWORDS.has(nameN)){
+    if(ctx.titleN.includes(nameN)){score+=85;ev.push('과제명 명칭일치');}
+    else if(ctx.descN.includes(nameN)){score+=40;ev.push('설명 명칭일치');}
+  }
+  String(item.fullName||'').split('>').map(x=>normalizeText(x)).filter(segmentUsable).forEach(seg=>{
+    if(ctx.titleN.includes(seg)){score+=36;ev.push('경로일치:'+seg);}
+    else if(ctx.descN.includes(seg)){score+=14;ev.push('경로일치:'+seg);}
+  });
+  ctx.tokenWeights.forEach((w,t)=>{
+    if(t.length<2||PRECISION_STOPWORDS.has(t))return;
+    // 두 글자 영문/대분류 약어는 부분일치 금지
+    if(t.length<=2 && /^[a-z]+$/.test(t)) return;
+    if(hay.includes(t)){
+      const lenBoost=Math.min(3.2,Math.max(1,t.length/2));
+      score+=w*lenBoost*5;
+      if(ev.length<7)ev.push('키워드:'+t);
+    }
+  });
+  const db=domainBoostFor(key,item,ctx); score+=db.score; db.ev.forEach(x=>ev.push('도메인:'+x));
+  // 일반 기타는 낮추되, 국가전략 1300은 fallback으로 살림
+  if(/기타|달리 분류되지|속하지 않는/.test(String(item.name)+' '+String(item.fullName))){
+    if(!(key==='strategicTech'&&code==='1300')) score*=0.30;
+  }
+  score*=levelFactor(key,item.level);
+  const fixed=applyIntentBoost(key,item,ctx,score,ev);
+  return {...item,score:fixed.score,evidence:fixed.ev};
+}
+function classifyTaxonomy(key,ctx){
+  const data=TAXONOMIES[key]||[];
+  const limit=TAX_LIMITS[key]||1;
+  let scored=data.map(item=>scoreCandidate(key,item,ctx)).filter(x=>x.score>1).sort((a,b)=>b.score-a.score);
+  // 국가전략기술: 의미 있는 전략기술 후보가 없으면 기타 연구를 fallback으로 사용
+  if(key==='strategicTech'){
+    const top=scored[0];
+    const strongStrategic=top && top.score>70 && !(String(top.code)==='1300');
+    if(!strongStrategic){
+      const other=(TAXONOMIES.strategicTech||[]).find(x=>x.code==='1300');
+      if(other) scored=[{...other,score:80,evidence:['fallback:국가전략기술 직접 맥락 약함']},...scored.filter(x=>x.code!=='1300')];
+    }
+  }
+  // 부모/자식 동시 노출 최소화: 자식이 이미 있으면 상위분류 배제
+  const picked=[];
+  for(const item of scored){
+    const fn=String(item.fullName||'');
+    if(picked.some(p=>fn===String(p.fullName))) continue;
+    if(picked.some(p=>String(p.fullName).startsWith(fn+' >'))) continue;
+    picked.push(item);
+    if(picked.length>=Math.max(limit,3)) break;
+  }
+  const max=picked[0]?.score||scored[0]?.score||1;
+  let mapped=picked.slice(0,limit).map((x,i)=>({...x,rank:i+1,confidence:Math.max(10,Math.min(99,Math.round((x.score/max)*96)))}));
+  if(key==='applicationField') mapped=mapped.filter((x,i)=>i===0 || x.confidence>=45);
+  return mapped;
+}
+function classifyAll(title,desc){
+  const ctx=buildCtx(title,desc);
+  const result={};
+  Object.keys(TAX_LABELS).forEach(key=>{result[key]=classifyTaxonomy(key,ctx);});
+  return {result,ctx};
+}
+
 // ── 초기화 ──────────────────────────────────
 updateDataCount();
 renderHist();
