@@ -128,7 +128,7 @@ textarea{resize:vertical;min-height:116px}
 <header>
   <div class="logo">
     TRLBERT
-    <span class="logo-badge">v1.1</span>
+    <span class="logo-badge">v1.2.1</span>
   </div>
   <div class="hdr-r">기술준비수준 자동 판정 &nbsp;·&nbsp; 국책과제 분류 자동검색</div>
 </header>
@@ -640,19 +640,28 @@ function analyze(){
   const desc=document.getElementById('f-desc').value.trim();
   if(!desc){alert('과제 설명을 입력해주세요');return;}
   show('st-loading'); showClass('class-loading');
-  document.getElementById('btn-go').disabled=true;
+  const btn=document.getElementById('btn-go');
+  btn.disabled=true;
   setTimeout(()=>{
-    const text=`${title} ${desc}`;
-    const res=run(text);
-    const cls=classifyAll(title,desc);
-    lastR={...res,title,desc};
-    lastClass=cls;
-    renderClass(cls);
-    render(res,title);
-    saveHist(title,res,cls);
-    refreshCopy();
-    document.getElementById('btn-go').disabled=false;
-  },250);
+    try{
+      const text=`${title} ${desc}`;
+      const res=run(text);
+      const cls=classifyAll(title,desc);
+      lastR={...res,title,desc};
+      lastClass=cls;
+      renderClass(cls);
+      render(res,title);
+      saveHist(title,res,cls);
+      refreshCopy();
+    }catch(err){
+      console.error('[TRLBERT] analyze failed:',err);
+      show('st-empty'); showClass('class-empty');
+      document.getElementById('copy-output').textContent='분석 중 오류가 발생했습니다. 브라우저 콘솔의 [TRLBERT] 로그를 확인하세요.\n오류: '+(err&&err.message?err.message:String(err));
+      alert('분석 중 오류가 발생했습니다: '+(err&&err.message?err.message:String(err)));
+    }finally{
+      btn.disabled=false;
+    }
+  },120);
 }
 
 function renderClass(cls){
@@ -949,7 +958,10 @@ function preciseContainsAny(text,terms){const allN=normalizeText(text);return te
 function isExactTokenOrPhrase(ctx,term){
   const t=normalizeText(term); if(!t)return false;
   // 짧은 영문 약어(IT/ST/AI/AR/ESS/TFT/LCD/NPU 등)는 반드시 토큰 단위로만 매칭
-  if(t.length<=4 && /^[a-z0-9+.-]+$/.test(t)) return new RegExp(`(^|[^a-z0-9])${t.replace(/[.*+?^${}()|[\]\]/g,'\\$&')}([^a-z0-9]|$)`).test(ctx.allN);
+  if(t.length<=4 && /^[a-z0-9+.-]+$/.test(t)) {
+    const safe=t.replace(/[-/\^$*+?.()|[\]{}]/g,'\\$&');
+    return new RegExp(`(^|[^a-z0-9])${safe}([^a-z0-9]|$)`).test(ctx.allN);
+  }
   return ctx.allN.includes(t);
 }
 function classifyProjectIntent(ctx){
@@ -1135,12 +1147,21 @@ function classifyAll(title,desc){
 }
 
 // ── 초기화 ──────────────────────────────────
-updateDataCount();
-renderHist();
-refreshCopy();
+function initApp(){
+  try{
+    updateDataCount();
+    renderHist();
+    refreshCopy();
+  }catch(err){
+    console.error('[TRLBERT] init failed:',err);
+    const el=document.getElementById('data-count');
+    if(el) el.textContent='초기화 오류';
+  }
+}
+initApp();
 
 // 테스트용 내부 함수 노출
-window.__trlbertTest={classifyAll,run,TAXONOMIES};
+window.__trlbertTest={classifyAll,run,TAXONOMIES,initApp};
 </script>
 </body>
 </html>
