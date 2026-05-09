@@ -128,7 +128,7 @@ textarea{resize:vertical;min-height:116px}
 <header>
   <div class="logo">
     TRLBERT
-    <span class="logo-badge">v1.2.1</span>
+    <span class="logo-badge">v1.3.0</span>
   </div>
   <div class="hdr-r">기술준비수준 자동 판정 &nbsp;·&nbsp; 국책과제 분류 자동검색</div>
 </header>
@@ -1145,6 +1145,177 @@ function classifyAll(title,desc){
   Object.keys(TAX_LABELS).forEach(key=>{result[key]=classifyTaxonomy(key,ctx);});
   return {result,ctx};
 }
+
+
+/* =============================================================
+ * v1.3 Biomedical Precision Patch
+ * - 병원/EMR/희귀질환/연합학습/진단 과제의 로봇·제조 오판 방지
+ * - 국가전략기술 05 첨단바이오 > 0504 디지털헬스 데이터 분석·활용 우선 보정
+ * - 분류 %를 상대점수(항상 96%)가 아닌 절대점수+마진 기반 신뢰도로 재보정
+ * - 목표/예정 문맥의 파일럿·검증 키워드가 TRL 5~6으로 과대평가되는 문제 보정
+ * ============================================================= */
+(function applyBiomedicalPrecisionPatch(){
+  // 헤더 버전 표시
+  try{document.querySelector?.('.logo-badge')?.replaceChildren(document.createTextNode('v1.3.0'));}catch(_e){}
+
+  // "검사 결과"가 제조 품질검사로 오인되는 문제 제거
+  const robot=PRECISION_DOMAINS.find(d=>d.id==='robot_mfg');
+  if(robot){
+    robot.requires=(robot.requires||[]).filter(t=>t!=='검사');
+    robot.terms=(robot.terms||[]).filter(t=>t!=='검사');
+  }
+
+  // 기존 바이오·신약 도메인 보강: 신약/의약품 + 의료AI가 섞인 과제 대응
+  const bio=PRECISION_DOMAINS.find(d=>d.id==='bio_drug');
+  if(bio){
+    bio.terms=unique([...(bio.terms||[]),'희귀질환','난치성 질환','질환','진단','emr','임상데이터','의료데이터','연합학습','생물정보학','디지털헬스']);
+    bio.boosts.nationalScience={codes:['LC0301','LC0302','LC0303','LC0304','LC0305','LC0318','LC0324','LC0399','LC0112','LC0215','LC0403','LA0706'],prefixes:['LC03','LC01','LC02','LC04','LA07']};
+    bio.boosts.industrialTech={codes:['500100','500110','500111','500114','500300','500307','500600','500604','500605','500606'],prefixes:['5001','5003','5006']};
+    bio.boosts.strategicTech={codes:['0501','0502','0503','0504'],prefixes:['05']};
+  }
+
+  // 의료 AI/디지털헬스 전용 도메인: 병원 EMR 기반 희귀질환 예측 모델 등
+  if(!PRECISION_DOMAINS.some(d=>d.id==='clinical_ai')){
+    PRECISION_DOMAINS.unshift({
+      id:'clinical_ai',
+      label:'디지털헬스·의료AI',
+      requires:['병원','환자','진단','희귀질환','질환','emr','처방','검사 결과','진단 코드','임상','의료데이터','후향적 데이터셋','연합학습','설명가능 ai','federated learning'],
+      terms:['병원','환자','진단','희귀질환','난치성 질환','질환','emr','phr','검사 결과','처방','진단 코드','임상','임상 변수','의료데이터','후향적 데이터셋','연합학습','federated learning','개인정보','설명가능 ai','예측 모델','진단 보조','디지털헬스','생물정보학'],
+      boosts:{
+        nationalScience:{codes:['LC0112','LC0215','LC0403','LC0408','LC0220','LC0208','LC0302','LA0706','NA0901'],prefixes:['LC01','LC02','LC04','LA07']},
+        sixT:{codes:['020113','020217','020219','020211','020212'],prefixes:['020100','020200']},
+        strategicTech:{codes:['0504','0903','0902'],prefixes:['05']},
+        industrialTech:{codes:['500604','500605','500606','500415','500307','500110','500111'],prefixes:['5006','5004','5003','5001']},
+        applicationField:{codes:['X02','Y18','Y06','Y09']},
+        newIndustry12:{codes:['T001907','T001906','T001901']}
+      }
+    });
+  }
+})();
+
+const __classifyProjectIntent_v12 = classifyProjectIntent;
+classifyProjectIntent = function(ctx){
+  const base=__classifyProjectIntent_v12(ctx);
+  const clinicalHealthcare=preciseContainsAny(ctx.allN,['병원','환자','진단','희귀질환','난치성 질환','질환','emr','phr','처방','검사 결과','진단 코드','임상','의료데이터','후향적 데이터셋','진단 보조','디지털헬스','의료 ai','의료ai','연합학습']);
+  const drugDiscovery=preciseContainsAny(ctx.allN,['신약','의약품','후보물질','약물','제약','admet','약효','약물전달','항체','백신','치료제','단백질의약품','유전자의약품']);
+  const federatedMedical=preciseContainsAny(ctx.allN,['연합학습','federated learning','개인정보','로컬 모델','파라미터 집계','다기관 병원']);
+  const plannedNotProven=/(목표로 한다|목표로한다|개발하는 것을 목표|개발한다|적용한다|포함한다|검증하고|수행하여|평가한다|예정|계획|추진|향상시키기 위한|구축한다|제공한다)/.test(ctx.allN) && !/(완료|하였다|했다|구현하였다|검증하였다|실증하였다|입증하였다|확인하였다|배치하였다|운용하였다|상용화|인증)/.test(ctx.allN);
+  return {...base,clinicalHealthcare,drugDiscovery,federatedMedical,plannedNotProven};
+};
+
+const __applyIntentBoost_v12 = applyIntentBoost;
+applyIntentBoost = function(key,item,ctx,score,ev){
+  let fixed=__applyIntentBoost_v12(key,item,ctx,score,ev);
+  score=fixed.score; ev=[...(fixed.ev||[])];
+  const code=String(item.code||'');
+  const I=ctx.intent||{};
+  function add(s,e){score+=s;if(e)ev.push(e);}
+  function mult(m,e){score*=m;if(e)ev.push(e);}
+
+  if(I.clinicalHealthcare){
+    if(key==='nationalScience'){
+      if(['LC0112','LA0706'].includes(code)) add(260,'의료AI보정:생물정보학/임상데이터');
+      if(['LC0215','LC0403','LC0408'].includes(code)) add(220,'의료AI보정:진단/판독');
+      if(['LC0220','LC0208','NA0901'].includes(code)) add(120,'의료AI보정:질환예측/의학통계');
+      if(['LC0302','LC0318','LC0324','LC0399'].includes(code) && I.drugDiscovery) add(190,'신약개발보정:의약품 모델링/진단제');
+      if(code.startsWith('EA')||code.startsWith('ED')) mult(0.02,'감점:의료AI 과제이며 제조/기계 맥락 아님');
+    }
+    if(key==='sixT'){
+      if(code==='020113') add(270,'의료AI보정:생물정보학 기술');
+      if(code==='020217') add(220,'의료AI보정:의과학·의공학 기술');
+      if(code==='020211' && I.drugDiscovery) add(220,'신약개발보정:바이오신약 개발기술');
+      if(code==='020212' && preciseContainsAny(ctx.allN,['희귀질환','난치성 질환','치료'])) add(120,'질환보정:난치성 질환');
+      if(code.startsWith('01') && !preciseContainsAny(ctx.allN,['정보처리 시스템','소프트웨어 개발도구','플랫폼 상용화'])) mult(0.35,'감점:BT/의료 데이터 과제 우선');
+    }
+    if(key==='strategicTech'){
+      if(code==='0504') add(320,'의료AI보정:디지털헬스 데이터 분석·활용');
+      if(['0902','0903'].includes(code)) add(55,'보조후보:AI 모델링/신뢰AI');
+      if(code==='1300') mult(0.05,'감점:첨단바이오 직접 맥락 존재');
+      if(code.startsWith('11')||code.startsWith('03')||code.startsWith('04')) mult(0.02,'감점:의료AI 과제와 무관한 전략기술');
+    }
+    if(key==='applicationField'){
+      if(code==='X02') add(280,'의료AI보정:공공 건강');
+      if(code==='Y18') add(220,'의료AI보정:보건업/의료서비스');
+      if(code==='Y06' && I.drugDiscovery) add(170,'신약개발보정:의료용물질/의약품');
+      if(['Y08','Y10','Y11'].includes(code)) mult(0.03,'감점:제조 적용처 아님');
+      if(code==='Y09' && !preciseContainsAny(ctx.allN,['의료기기','진단기기','정밀기기','광학기기','시계'])) mult(0.35,'감점:소프트웨어 기반 진단모델');
+    }
+    if(key==='industrialTech'){
+      if(['500604','500605','500606'].includes(code)) add(280,'의료AI보정:의료정보 및 시스템');
+      if(code==='500415') add(230,'의료AI보정:지능형 판독시스템');
+      if(code==='500307') add(130,'의료AI보정:바이오마커/예측');
+      if(['500110','500111','500114'].includes(code) && I.drugDiscovery) add(180,'신약개발보정:의약바이오');
+      if(code.startsWith('100')||code.startsWith('200')) mult(0.02,'감점:기계/전자 제조 아님');
+    }
+    if(key==='newIndustry12'){
+      if(code==='T001907') add(260,'의료AI보정:헬스케어');
+      if(code==='T001906' && I.drugDiscovery) add(210,'신약개발보정:생명·신약');
+      if(['T001904','T001912','T001902'].includes(code)) mult(0.02,'감점:의료AI 과제와 무관');
+    }
+  }
+  return {score,ev:unique(ev).slice(0,10)};
+};
+
+function confidenceForTaxonomy(key,x,scored,i){
+  const denom={nationalScience:520,sixT:500,applicationField:430,strategicTech:420,industrialTech:520,newIndustry12:380}[key]||460;
+  const abs=100*(1-Math.exp(-Math.max(0,x.score)/denom));
+  const next=scored[i+1]?.score||0;
+  const prev=scored[i-1]?.score||0;
+  const margin=Math.max(0,(x.score-Math.max(next,prev*0.85))/Math.max(x.score,1));
+  const evidenceBonus=(x.evidence||[]).some(e=>/보정|도메인|명칭일치|경로일치/.test(e))?8:0;
+  return Math.max(12,Math.min(97,Math.round(abs*0.70+(45+45*margin)*0.30+evidenceBonus)));
+}
+
+classifyTaxonomy = function(key,ctx){
+  const data=TAXONOMIES[key]||[];
+  const limit=TAX_LIMITS[key]||1;
+  let scored=data.map(item=>scoreCandidate(key,item,ctx)).filter(x=>x.score>1).sort((a,b)=>b.score-a.score);
+  if(key==='strategicTech'){
+    const top=scored[0];
+    const strongStrategic=top && top.score>70 && String(top.code)!=='1300';
+    if(!strongStrategic){
+      const other=(TAXONOMIES.strategicTech||[]).find(x=>x.code==='1300');
+      if(other) scored=[{...other,score:80,evidence:['fallback:국가전략기술 직접 맥락 약함']},...scored.filter(x=>x.code!=='1300')];
+    }
+  }
+  const picked=[];
+  for(const item of scored){
+    const fn=String(item.fullName||'');
+    if(picked.some(p=>fn===String(p.fullName))) continue;
+    if(picked.some(p=>String(p.fullName).startsWith(fn+' >'))) continue;
+    picked.push(item);
+    if(picked.length>=Math.max(limit,3)) break;
+  }
+  let mapped=picked.slice(0,limit).map((x,i)=>({...x,rank:i+1,confidence:confidenceForTaxonomy(key,x,picked,i)}));
+  if(key==='applicationField') mapped=mapped.filter((x,i)=>i===0 || x.confidence>=38);
+  return mapped;
+};
+
+const __run_v12 = run;
+run = function(text){
+  const base=__run_v12(text);
+  const tl=normalizeText(text);
+  const planned=/(목표로 한다|목표로한다|개발하는 것을 목표|개발한다|적용한다|포함한다|검증하고|수행하여|평가한다|예정|계획|추진|향상시키기 위한|구축한다|제공한다)/.test(tl);
+  const completed=/(완료|하였다|했다|구현하였다|검증하였다|실증하였다|입증하였다|확인하였다|배치하였다|운용하였다|상용화|인증|허가)/.test(tl);
+  const retrospective=/(후향적 데이터셋|retrospective|데이터셋|모델링|시뮬레이션|개념 증명|proof of concept|poc)/.test(tl);
+  const clinical=/(병원|환자|진단|희귀질환|emr|처방|임상|의료데이터|연합학습)/.test(tl);
+  if(planned && !completed){
+    let s=base.final.slice();
+    // 목표/예정 문맥에서는 '파일럿/검증'을 완료 증거가 아니라 향후 계획으로 처리
+    s[0]+=clinical?0.10:0.06;
+    s[1]+=clinical?0.28:0.18;
+    s[2]+=retrospective?0.20:0.10;
+    s[3]*=0.45; s[4]*=0.35; s[5]*=0.18; s[6]*=0.10; s[7]*=0.08; s[8]*=0.05;
+    const final=norm(s);
+    const pi=final.indexOf(Math.max(...final));
+    const cls=norm([0,1,2].map(g=>[[0,1,2],[3,4,5],[6,7,8]][g].reduce((a,i)=>a+final[i],0)));
+    const hits=unique([...base.hits.map(h=>h.kw),'목표/예정 문맥 보정']).map(kw=>typeof kw==='string'?{kw,l:pi+1,c:TM[pi].c}:kw);
+    const mods={...base.mods,pseudo:final};
+    return {final,hits,pi,cls,mods};
+  }
+  return base;
+};
+
 
 // ── 초기화 ──────────────────────────────────
 function initApp(){
