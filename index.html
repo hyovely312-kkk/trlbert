@@ -24,6 +24,37 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:20px}
 .card+.card{margin-top:16px}
+
+.right-stack{display:flex;flex-direction:column;gap:16px}
+.classify-panel{position:relative;overflow:hidden;border:1px solid #DBEAFE;background:linear-gradient(180deg,#fff 0%,#F8FAFF 100%)}
+.classify-panel::before{content:"";position:absolute;right:-80px;top:-110px;width:230px;height:230px;background:radial-gradient(circle,rgba(29,78,216,.18),transparent 64%);pointer-events:none}
+.classify-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px;position:relative;z-index:1}
+.classify-title{font-size:18px;font-weight:700;letter-spacing:-.03em;margin-bottom:4px}
+.classify-sub{font-size:12px;color:var(--muted);line-height:1.55}
+.classify-status{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:#1D4ED8;background:#EFF6FF;border:1px solid #BFDBFE;padding:5px 9px;border-radius:999px;white-space:nowrap}
+.tax-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;position:relative;z-index:1}
+.tax-card{background:rgba(255,255,255,.86);border:1px solid var(--border);border-radius:12px;padding:12px;box-shadow:0 8px 18px rgba(17,24,39,.045)}
+.tax-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.tax-name{font-size:12px;font-weight:700;color:#1F2937;letter-spacing:-.02em}
+.tax-rule{font-size:10px;color:var(--light);background:var(--border-lt);padding:2px 6px;border-radius:999px;white-space:nowrap}
+.tax-item{padding:8px 0;border-top:1px solid var(--border-lt)}
+.tax-item:first-of-type{border-top:0;padding-top:0}
+.tax-code{font-size:12px;font-weight:800;color:var(--primary);font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;cursor:pointer}
+.tax-label{font-size:12px;font-weight:600;margin-top:2px;line-height:1.35;color:var(--text)}
+.tax-group{font-size:10px;color:var(--light);margin-top:1px}
+.tax-score{display:flex;align-items:center;gap:8px;margin-top:6px}
+.tax-track{height:6px;background:var(--border-lt);border-radius:999px;overflow:hidden;flex:1}
+.tax-fill{height:100%;background:linear-gradient(90deg,#1D4ED8,#7C3AED);border-radius:999px}
+.tax-pct{font-size:10px;color:var(--muted);width:28px;text-align:right}
+.tax-empty{font-size:12px;color:var(--light);padding:12px 0}
+.copy-bottom{margin-top:20px}
+.copy-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:12px}
+.copy-title{font-size:16px;font-weight:700;letter-spacing:-.02em;margin-bottom:3px}
+.copy-sub{font-size:12px;color:var(--muted)}
+.copy-box{white-space:pre-wrap;background:#111827;color:#E5E7EB;border-radius:12px;border:1px solid #1F2937;padding:14px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12px;line-height:1.6;min-height:120px;overflow:auto}
+.copy-actions{display:flex;gap:6px;flex-shrink:0}
+@media(max-width:900px){.tax-grid{grid-template-columns:1fr}.copy-head{flex-direction:column}.copy-actions{width:100%}.copy-actions .btn-sm{flex:1}}
+
 .ctitle{font-size:11px;font-weight:600;color:var(--light);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px}
 
 .fg{margin-bottom:14px}
@@ -120,31 +151,36 @@ textarea{resize:vertical;min-height:88px}
 
         <div class="fg">
           <label>과제 설명 *</label>
-          <textarea id="f-desc" placeholder="기술 내용, 수행 방법, 달성 수준을 자유롭게 입력하세요..."></textarea>
+          <textarea id="f-desc" placeholder="기술 내용, 수행 방법, 달성 수준, 적용 산업, 핵심 키워드를 자유롭게 입력하세요..."></textarea>
         </div>
 
         <div class="fg">
-          <label>사업 분류</label>
+          <label>산업 도메인 <span style="font-weight:400;color:var(--light)">(선택사항)</span></label>
           <select id="f-prog">
-            <option value="">선택 안함</option>
-            <option>NP (NetsPresso)</option>
-            <option>AI-City</option>
-            <option>AI-Industry</option>
-            <option>Global R&D</option>
-            <option>정부 R&D</option>
+            <option value="">자동 판단</option>
+            <option>제조·산업</option>
+            <option>정보서비스·플랫폼</option>
+            <option>반도체·컴퓨팅</option>
+            <option>의료·바이오</option>
+            <option>교통·모빌리티</option>
+            <option>에너지·환경</option>
+            <option>항공·우주·국방</option>
+            <option>공공·안전·스마트시티</option>
           </select>
         </div>
 
         <div class="fg">
-          <label>주요 기술 분류</label>
+          <label>주요 기술 분류 <span style="font-weight:400;color:var(--light)">(선택사항)</span></label>
           <select id="f-tx">
-            <option value="">선택 안함</option>
-            <option>AI / SW</option>
-            <option>HW / 반도체</option>
-            <option>통신 / 네트워크</option>
-            <option>로봇 / 드론</option>
-            <option>의료 / 바이오</option>
-            <option>에너지 / 환경</option>
+            <option value="">자동 판단</option>
+            <option>AI·소프트웨어</option>
+            <option>HW·반도체·전자</option>
+            <option>통신·네트워크</option>
+            <option>로봇·자율시스템</option>
+            <option>바이오·의료</option>
+            <option>에너지·환경</option>
+            <option>항공·우주</option>
+            <option>보안·국방</option>
           </select>
         </div>
 
@@ -173,6 +209,22 @@ textarea{resize:vertical;min-height:88px}
     </div>
 
     <!-- ── 오른쪽: 결과 ── -->
+
+    <div class="right-stack">
+      <div class="card classify-panel" id="classify-panel">
+        <div class="classify-head">
+          <div>
+            <div class="ctitle" style="margin-bottom:8px">국책과제 분류 자동추천</div>
+            <div class="classify-title">과제명·설명 기반 분류 후보</div>
+            <div class="classify-sub">국가과학기술표준분류, 6T, 적용분야, 국가전략기술, 산업기술, 12대 신산업분야를 먼저 추천합니다.</div>
+          </div>
+          <div class="classify-status" id="tax-status">대기</div>
+        </div>
+        <div class="tax-grid" id="tax-grid">
+          <div class="tax-empty">과제 정보를 입력하고 TRL 판정하기를 누르면 분류 후보가 먼저 표시됩니다.</div>
+        </div>
+      </div>
+
     <div class="card" id="result-panel">
 
       <!-- 초기 상태 -->
@@ -218,7 +270,23 @@ textarea{resize:vertical;min-height:88px}
 
       </div>
     </div>
+    </div>
 
+  </div>
+
+  <div class="card copy-bottom" id="copy-panel">
+    <div class="copy-head">
+      <div>
+        <div class="ctitle" style="margin-bottom:8px">복사 결과</div>
+        <div class="copy-title">국책과제 입력용 통합 결과</div>
+        <div class="copy-sub">분류 후보와 TRL 판정 결과를 한 번에 복사할 수 있도록 맨 아래에 고정했습니다.</div>
+      </div>
+      <div class="copy-actions">
+        <button class="btn btn-sm" onclick="copyBottomResult()">전체 복사</button>
+        <button class="btn btn-sm btn-ghost" onclick="exportRes()">JSON</button>
+      </div>
+    </div>
+    <div class="copy-box" id="copy-text">판정 실행 후 복사용 결과가 여기에 표시됩니다.</div>
   </div>
 </div>
 
@@ -263,6 +331,97 @@ const PS=[
   {t:'자율주행 인지 시스템 개발',d:'시제품을 구현하여 유사 환경에서 성능 검증을 완료하였다. 기존 시스템과의 통합 테스트를 수행하였으며, end-to-end 기능의 engineering feasibility를 실증하였다.'},
   {t:'위성 탑재 AI 처리 시스템',d:'실제 운용 환경에서 시스템 시제품의 성능을 검증하였다. 운용 하드웨어와 완전 통합하여 모든 핵심 기능을 시연하였으며, verification and validation 절차를 완료하고 성공적 운용 결과를 확인하였다.'},
 ];
+
+// ── 국책과제 분류 자동추천 데이터/로직 ─────────────────────
+const TAX_LABELS={
+  nationalScience:'국가과학기술표준분류',sixT:'6T관련기술코드',applicationField:'적용분야분류',
+  strategicTech:'국가전략기술분류',industrialTech:'산업기술분류',newIndustry12:'12대 신산업분야'
+};
+const TAX_LIMITS={nationalScience:3,sixT:1,applicationField:3,strategicTech:1,industrialTech:1,newIndustry12:1};
+const TAX_DATA={
+  nationalScience:[
+    {code:'EE0108',name:'인공지능',group:'정보/통신',kw:['AI','인공지능','머신러닝','딥러닝','LLM','VLM','생성형','분류','예측','추론','멀티모달']},
+    {code:'EE0102',name:'알고리즘',group:'정보/통신',kw:['알고리즘','최적화','추론','스케줄링','추천','분류','휴리스틱','경량화']},
+    {code:'EE0201',name:'임베디드 소프트웨어',group:'정보/통신',kw:['임베디드','온디바이스','엣지','Edge','펌웨어','디바이스','AI Box','NPU','저전력']},
+    {code:'EE0202',name:'소프트웨어 플랫폼',group:'정보/통신',kw:['플랫폼','SaaS','API','워크플로우','자동화','대시보드','클라우드']},
+    {code:'EC0201',name:'시스템반도체',group:'전기/전자',kw:['반도체','시스템반도체','SoC','NPU','AI반도체','가속기','칩']},
+    {code:'ED0101',name:'이동통신/네트워크',group:'정보/통신',kw:['5G','6G','통신','네트워크','IoT','엣지']},
+    {code:'EB0201',name:'자율주행/모빌리티',group:'기계/교통',kw:['자율주행','모빌리티','교통','도로','ITS','스마트교차로','보행자']},
+    {code:'LD0101',name:'신약개발/의약품',group:'보건의료/생명',kw:['신약','의약품','ADMET','약물','단백질','제약','임상']},
+    {code:'LD0201',name:'의료기기/디지털헬스',group:'보건의료',kw:['의료기기','디지털헬스','진단','환자','병원','EMR','PHR','헬스케어']},
+    {code:'EG0101',name:'신재생에너지',group:'에너지/환경',kw:['신재생','태양광','풍력','수소','에너지','탄소중립','전력']},
+    {code:'SA0101',name:'우주항공 시스템',group:'우주/항공',kw:['우주','위성','저궤도','우주정거장','항공','발사체','탑재체','미세중력']},
+    {code:'NA0101',name:'나노/첨단소재',group:'재료',kw:['소재','나노','복합소재','첨단소재','부품','탄소소재']}
+  ],
+  sixT:[
+    {code:'IT',name:'정보기술(IT)',group:'6T',kw:['AI','소프트웨어','반도체','통신','데이터','플랫폼','보안','클라우드','IoT']},
+    {code:'BT',name:'생명공학기술(BT)',group:'6T',kw:['바이오','의약품','신약','헬스케어','유전체','세포','단백질','의료']},
+    {code:'NT',name:'나노기술(NT)',group:'6T',kw:['나노','소재','미세공정','반도체소자','나노소재']},
+    {code:'ET',name:'환경기술(ET)',group:'6T',kw:['환경','탄소','수소','신재생','에너지','폐기물','온실가스']},
+    {code:'ST',name:'우주항공기술(ST)',group:'6T',kw:['우주','항공','위성','발사체','저궤도','우주정거장','탑재체']},
+    {code:'CT',name:'문화콘텐츠기술(CT)',group:'6T',kw:['콘텐츠','미디어','게임','XR','가상현실']}
+  ],
+  applicationField:[
+    {code:'AF01',name:'제조업',group:'적용분야',kw:['제조','공정','생산','품질','스마트팩토리','설비']},
+    {code:'AF02',name:'정보통신업',group:'적용분야',kw:['소프트웨어','플랫폼','통신','AI','데이터','클라우드']},
+    {code:'AF03',name:'보건업 및 사회복지',group:'적용분야',kw:['의료','병원','환자','헬스케어','진단','제약']},
+    {code:'AF04',name:'전문, 과학 및 기술서비스업',group:'적용분야',kw:['R&D','연구','기술서비스','분석','컨설팅','실험']},
+    {code:'AF05',name:'운수 및 창고업',group:'적용분야',kw:['교통','물류','운송','차량','자율주행','도로']},
+    {code:'AF07',name:'전기, 가스, 증기 및 공기조절 공급업',group:'적용분야',kw:['전력','에너지','그리드','신재생','수소']},
+    {code:'AF08',name:'공공행정/국방/사회안전',group:'적용분야',kw:['공공','국방','안전','관제','재난','보안','도시']},
+    {code:'AF09',name:'항공우주/해양',group:'적용분야',kw:['우주','항공','해양','위성','우주정거장','발사체']}
+  ],
+  strategicTech:[
+    {code:'ST-AI',name:'인공지능',group:'국가전략기술',kw:['AI','인공지능','LLM','VLM','생성형','머신러닝','딥러닝']},
+    {code:'ST-SEMI',name:'반도체·디스플레이',group:'국가전략기술',kw:['반도체','디스플레이','NPU','SoC','AI반도체','칩','가속기']},
+    {code:'ST-MOB',name:'첨단모빌리티',group:'국가전략기술',kw:['자율주행','모빌리티','차량','교통','드론','UAM']},
+    {code:'ST-BIO',name:'첨단바이오',group:'국가전략기술',kw:['바이오','신약','의료','제약','유전체','정밀의료']},
+    {code:'ST-SPACE',name:'우주항공·해양',group:'국가전략기술',kw:['우주','항공','위성','저궤도','우주정거장','발사체']},
+    {code:'ST-H2',name:'수소',group:'국가전략기술',kw:['수소','연료전지','그린수소']},
+    {code:'ST-CYBER',name:'사이버보안',group:'국가전략기술',kw:['보안','사이버','암호','제로트러스트','프라이버시']},
+    {code:'ST-ROBOT',name:'첨단로봇·제조',group:'국가전략기술',kw:['로봇','제조','자동화','스마트팩토리']},
+    {code:'ST-BATT',name:'이차전지',group:'국가전략기술',kw:['이차전지','배터리','ESS','전극','전해질']}
+  ],
+  industrialTech:[
+    {code:'IT-SW-SOL',name:'정보통신 > 소프트웨어 > SW솔루션',group:'산업기술분류',kw:['소프트웨어','솔루션','플랫폼','SaaS','API','대시보드','워크플로우']},
+    {code:'IT-AI',name:'정보통신 > 인공지능/데이터',group:'산업기술분류',kw:['AI','인공지능','데이터','LLM','VLM','머신러닝','딥러닝']},
+    {code:'SEMI-AI',name:'반도체·디스플레이 > AI 반도체',group:'산업기술분류',kw:['AI반도체','NPU','SoC','가속기','온디바이스','엣지칩']},
+    {code:'MOB-ITS',name:'첨단모빌리티 > 지능형 교통시스템',group:'산업기술분류',kw:['ITS','교통','도로','스마트교차로','보행자','돌발상황','관제']},
+    {code:'BIO-PHARMA',name:'바이오·의료 > 바이오의약/신약',group:'산업기술분류',kw:['바이오의약품','신약','제약','단백질','ADMET','의약 제조']},
+    {code:'BIO-MED',name:'바이오·의료 > 디지털헬스/의료기기',group:'산업기술분류',kw:['디지털헬스','의료기기','진단','EMR','PHR','병원']},
+    {code:'SPACE-SYS',name:'항공우주 > 우주 시스템/탑재체',group:'산업기술분류',kw:['우주','위성','탑재체','우주정거장','미세중력','저궤도']},
+    {code:'ENE-CARBON',name:'에너지·환경 > 탄소중립/환경',group:'산업기술분류',kw:['탄소','온실가스','환경','배출','CCUS','재활용']}
+  ],
+  newIndustry12:[
+    {code:'NI-AI',name:'AI',group:'12대 신산업',kw:['AI','인공지능','LLM','VLM','머신러닝','딥러닝','생성형']},
+    {code:'NI-SEMI',name:'반도체·디스플레이',group:'12대 신산업',kw:['반도체','디스플레이','NPU','SoC','AI반도체']},
+    {code:'NI-BATT',name:'이차전지',group:'12대 신산업',kw:['배터리','이차전지','ESS']},
+    {code:'NI-MOB',name:'첨단모빌리티',group:'12대 신산업',kw:['자율주행','모빌리티','교통','차량','드론','UAM']},
+    {code:'NI-BIO',name:'첨단바이오',group:'12대 신산업',kw:['바이오','신약','제약','의료','헬스케어','유전체']},
+    {code:'NI-SPACE',name:'항공우주·해양',group:'12대 신산업',kw:['우주','항공','위성','해양','저궤도','우주정거장']},
+    {code:'NI-H2',name:'수소',group:'12대 신산업',kw:['수소','연료전지','그린수소']},
+    {code:'NI-CYBER',name:'사이버보안',group:'12대 신산업',kw:['보안','사이버','암호','프라이버시']},
+    {code:'NI-ROBOT',name:'첨단로봇·제조',group:'12대 신산업',kw:['로봇','제조','스마트팩토리','자동화']},
+    {code:'NI-COMM',name:'차세대통신',group:'12대 신산업',kw:['5G','6G','통신','네트워크','IoT']}
+  ]
+};
+const TAX_SYNONYM={
+  'llm':['대형언어모델','언어모델','생성형','챗봇','rag'], 'vlm':['비전언어모델','영상이해','멀티모달'],
+  '온디바이스':['on-device','edge','엣지','단말','저전력','경량화','npu'], '경량화':['압축','프루닝','양자화','지식증류','최적화','가속'],
+  '반도체':['npu','soc','asic','ai chip','가속기','칩'], '바이오':['의약품','신약','제약','단백질','세포','정밀의료'],
+  '우주':['위성','저궤도','민간우주정거장','미세중력','탑재체','항공'], '교통':['its','스마트교차로','도로','자율주행','보행자'],
+  '보안':['사이버','암호','인증','프라이버시','제로트러스트'], '에너지':['수소','배터리','이차전지','ess','신재생','탄소중립']
+};
+function taxNorm(t){return (t||'').toString().toLowerCase().replace(/[(){}\[\],.;:!?='"“”‘’·•▶▪□■>]/g,' ').replace(/\s+/g,' ').trim();}
+function taxExpand(t){let b=taxNorm(t),ex=[];Object.entries(TAX_SYNONYM).forEach(([k,vs])=>{const all=[k,...vs].map(taxNorm);if(all.some(v=>b.includes(v)))ex.push(...all)});return b+' '+ex.join(' ')}
+function taxScore(item,title,desc,domain,tech){const t=taxExpand(title),d=taxExpand(desc),extra=taxExpand((domain||'')+' '+(tech||'')),all=t+' '+d+' '+extra;const base=taxExpand([item.code,item.name,item.group,...(item.kw||[])].join(' '));let score=0,e=[];const keys=[item.code,item.name,item.group,...(item.kw||[])].map(taxNorm).filter(x=>x.length>1);keys.forEach(k=>{if(t.includes(k)){score+=20;e.push('과제명:'+k)} if(d.includes(k)){score+=8;e.push('설명:'+k)} if(extra.includes(k)){score+=4;e.push('보정:'+k)} if(all.includes(k)&&base.includes(k))score+=2}); if(all.includes(taxNorm(item.name)))score+=28; if(all.includes(taxNorm(item.code)))score+=34; return {...item,score,evidence:[...new Set(e)].slice(0,4)}}
+function classifyTax(title,desc){const domain=document.getElementById('f-prog')?.value||'';const tech=document.getElementById('f-tx')?.value||'';const out={};Object.keys(TAX_LABELS).forEach(k=>{out[k]=(TAX_DATA[k]||[]).map(x=>taxScore(x,title,desc,domain,tech)).filter(x=>x.score>0).sort((a,b)=>b.score-a.score).slice(0,TAX_LIMITS[k]);});return out;}
+function renderTax(out){lastC=out;const grid=document.getElementById('tax-grid');const st=document.getElementById('tax-status');if(!grid)return;st.textContent='추천 완료';grid.innerHTML=Object.keys(TAX_LABELS).map(k=>{const items=out[k]||[];const max=Math.max(1,...items.map(x=>x.score||0));return `<div class="tax-card"><div class="tax-top"><div class="tax-name">${TAX_LABELS[k]}</div><div class="tax-rule">${TAX_LIMITS[k]===1?'단일':'최대 '+TAX_LIMITS[k]}</div></div>${items.length?items.map((it,i)=>{const pct=Math.max(12,Math.min(100,Math.round((it.score/max)*100)));return `<div class="tax-item"><div><span class="tax-code" onclick="copyText('${it.code}')">${it.code}</span></div><div class="tax-label">${i+1}. ${it.name}</div><div class="tax-group">${it.group||''}</div><div class="tax-score"><div class="tax-track"><div class="tax-fill" style="width:${pct}%"></div></div><div class="tax-pct">${pct}%</div></div></div>`}).join(''):'<div class="tax-empty">추천 없음</div>'}</div>`}).join('');}
+function copyText(txt){navigator.clipboard.writeText(txt).then(()=>alert('복사되었습니다'));}
+function buildCopyText(){if(!lastR)return '판정 실행 후 복사용 결과가 여기에 표시됩니다.';const m=TM[lastR.pi];let lines=[];lines.push('[국책과제 분류 추천 결과]');if(lastC){Object.keys(TAX_LABELS).forEach(k=>{lines.push(`\n${TAX_LABELS[k]}`);const arr=lastC[k]||[];if(!arr.length)lines.push('- 추천 없음');arr.forEach((it,i)=>lines.push(`${i+1}순위: ${it.code} | ${it.name}${it.group?' | '+it.group:''}`));});}lines.push('\n[TRLBERT 판정 결과]');lines.push(`TRL ${m.l} (${m.g}) — ${m.d}`);lines.push(`신뢰도: ${Math.round(lastR.final[lastR.pi]*100)}%`);lines.push(`과제명: ${lastR.title||'-'}`);lines.push(`증거 키워드: ${lastR.hits.map(h=>h.kw).join(', ')||'-'}`);lines.push('\n[TRL 레벨별 스코어]');lastR.final.forEach((v,i)=>lines.push(`TRL${i+1}: ${Math.round(v*100)}%`));return lines.join('\n');}
+function updateBottomCopy(){const el=document.getElementById('copy-text');if(el)el.textContent=buildCopyText();}
+function copyBottomResult(){copyText(document.getElementById('copy-text').textContent);}
+
 
 // ── 스코어링 ────────────────────────────────
 function norm(a){const s=a.reduce((x,y)=>x+y,0)+1e-9;return a.map(v=>v/s);}
@@ -317,6 +476,7 @@ function run(text){
 
 // ── UI ──────────────────────────────────────
 let lastR=null;
+let lastC=null;
 
 function preset(i){
   document.getElementById('f-title').value=PS[i].t;
@@ -333,9 +493,13 @@ function analyze(){
   document.getElementById('btn-go').disabled=true;
   setTimeout(()=>{
     const res=run(`${title} ${desc}`);
+    const tax=classifyTax(title,desc);
     lastR={...res,title};
+    lastC=tax;
+    renderTax(tax);
     render(res,title);
     saveHist(title,res);
+    updateBottomCopy();
     document.getElementById('btn-go').disabled=false;
   },700);
 }
@@ -411,6 +575,7 @@ function render(res,title){
       <div style="font-size:12px;margin-top:3px;color:var(--muted)">TRL ${topI+1}에 집중 (${topP}%)</div>
     </div>`;
   }).join('');
+  updateBottomCopy();
 }
 
 // ── 이력 ────────────────────────────────────
@@ -420,6 +585,7 @@ function saveHist(title,res){
   if(h.length>30)h.shift();
   localStorage.setItem('trl_hist',JSON.stringify(h));
   renderHist();
+updateBottomCopy();
 }
 
 function renderHist(){
@@ -440,21 +606,23 @@ function renderHist(){
 
 function loadHist(i){
   const h=JSON.parse(localStorage.getItem('trl_hist')||'[]');
+  lastR={...h[i].res,title:h[i].title};
+  lastC=null;
   render(h[i].res,h[i].title);
+  updateBottomCopy();
 }
 
 function clearHist(){
   if(confirm('판정 이력을 모두 삭제하시겠습니까?')){
     localStorage.removeItem('trl_hist');renderHist();
+updateBottomCopy();
   }
 }
 
 // ── 내보내기 ────────────────────────────────
 function copyRes(){
   if(!lastR)return;
-  const m=TM[lastR.pi];
-  const txt=`[TRLBERT 판정 결과]\nTRL ${m.l} (${m.g}) — ${m.d}\n신뢰도: ${Math.round(lastR.final[lastR.pi]*100)}%\n과제: ${lastR.title||'-'}\n증거 키워드: ${lastR.hits.map(h=>h.kw).join(', ')}`;
-  navigator.clipboard.writeText(txt).then(()=>alert('클립보드에 복사되었습니다'));
+  copyBottomResult();
 }
 
 function exportRes(){
@@ -466,6 +634,7 @@ function exportRes(){
     trl_scores:Object.fromEntries(lastR.final.map((v,i)=>['TRL'+(i+1),+v.toFixed(3)])),
     class_proba:{Low:+lastR.cls[0].toFixed(3),Mid:+lastR.cls[1].toFixed(3),High:+lastR.cls[2].toFixed(3)},
     evidence_keywords:lastR.hits.map(h=>h.kw),
+    taxonomy_recommendations:lastC||null,
     timestamp:new Date().toISOString()
   };
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
@@ -474,6 +643,7 @@ function exportRes(){
 
 // ── 초기화 ──────────────────────────────────
 renderHist();
+updateBottomCopy();
 </script>
 </body>
 </html>
