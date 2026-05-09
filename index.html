@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TRLBERT — TRL 자동 판정 시스템</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F9FAFB;--surface:#fff;--border:#E5E7EB;--border-lt:#F3F4F6;
+  --text:#111827;--muted:#6B7280;--light:#9CA3AF;
+  --primary:#1D4ED8;--primary-lt:#EFF6FF;
+  --r:8px;--rl:12px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh}
+
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.logo{font-size:17px;font-weight:600;display:flex;align-items:center;gap:8px}
+.logo-badge{font-size:10px;font-weight:600;background:var(--primary);color:#fff;padding:2px 7px;border-radius:4px}
+.hdr-r{font-size:12px;color:var(--muted)}
+
+.container{max-width:1120px;margin:0 auto;padding:24px 20px}
+.grid{display:grid;grid-template-columns:320px 1fr;gap:20px;align-items:start}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:20px}
+.card+.card{margin-top:16px}
+.ctitle{font-size:11px;font-weight:600;color:var(--light);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px}
+
+.fg{margin-bottom:14px}
+label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:5px}
+input[type=text],textarea,select{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r);font-size:13px;font-family:inherit;color:var(--text);background:var(--surface);transition:border-color .15s;outline:none}
+input[type=text]:focus,textarea:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(29,78,216,.1)}
+textarea{resize:vertical;min-height:88px}
+
+.btn{padding:10px 16px;background:var(--primary);color:#fff;border:none;border-radius:var(--r);font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;transition:background .15s;width:100%}
+.btn:hover{background:#1e40af}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-sm{width:auto;padding:5px 11px;font-size:12px;background:var(--border-lt);color:var(--muted);border:1px solid var(--border)}
+.btn-sm:hover{background:var(--border);color:var(--text)}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--bg)}
+
+.presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+
+.trl-hero{display:flex;align-items:center;gap:20px;padding:18px 20px;background:var(--bg);border-radius:var(--r);margin-bottom:18px}
+.trl-big{font-size:56px;font-weight:700;line-height:1;min-width:72px;text-align:center}
+.trl-badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;margin-bottom:5px}
+.trl-desc{font-size:13px;font-weight:500;margin-bottom:3px}
+.trl-conf{font-size:12px;color:var(--muted)}
+.hero-actions{margin-left:auto;display:flex;gap:6px}
+
+.cls-row{display:flex;gap:8px;margin-bottom:18px}
+.cls-pill{flex:1;text-align:center;padding:10px 4px;border-radius:var(--r)}
+.cls-pill .cpct{font-size:20px;font-weight:700;display:block;line-height:1.2}
+.cls-pill .clbl{font-size:11px;font-weight:500}
+
+.grp-lbl{font-size:11px;font-weight:600;color:var(--light);text-transform:uppercase;letter-spacing:.05em;padding:8px 0 4px;border-bottom:1px solid var(--border-lt);margin-bottom:3px}
+.bar-row{display:flex;align-items:center;gap:8px;padding:3px 6px;border-radius:6px;margin:1px 0}
+.bar-row.active{background:var(--bg)}
+.bar-lbl{font-size:11px;font-weight:500;width:42px;flex-shrink:0}
+.bar-track{flex:1;height:10px;background:var(--border-lt);border-radius:5px;overflow:hidden}
+.bar-fill{height:100%;border-radius:5px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.bar-pct{font-size:11px;font-weight:500;width:30px;text-align:right;flex-shrink:0}
+.bar-tag{font-size:10px;width:40px;text-align:right;flex-shrink:0}
+
+.sep{border:none;border-top:1px solid var(--border);margin:16px 0}
+
+.kw-chip{display:inline-block;font-size:11px;padding:2px 8px;border-radius:4px;margin:2px;border:1px solid;background:transparent}
+
+.mod-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.mod-card{background:var(--bg);border-radius:var(--r);padding:9px 11px}
+.mod-name{font-size:11px;font-weight:600;margin-bottom:2px}
+.mod-sub{font-size:11px;color:var(--muted)}
+
+.hist-item{display:flex;align-items:center;gap:12px;padding:10px;border-radius:var(--r);cursor:pointer;transition:background .1s}
+.hist-item:hover{background:var(--bg)}
+.hist-trl{font-size:20px;font-weight:700;width:32px;text-align:center;flex-shrink:0}
+.hist-info{flex:1;min-width:0}
+.hist-title{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hist-sub{font-size:11px;color:var(--light)}
+.hist-time{font-size:11px;color:var(--light);flex-shrink:0}
+
+.empty{text-align:center;padding:40px 20px;color:var(--light)}
+.empty-icon{font-size:36px;opacity:.25;margin-bottom:12px}
+.empty-title{font-size:14px;font-weight:500;color:var(--muted);margin-bottom:4px}
+
+.loading{display:flex;align-items:center;justify-content:center;gap:10px;padding:48px 0;color:var(--muted);font-size:13px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .6s linear infinite}
+
+.low-c{color:#065F46;background:#D1FAE5}
+.mid-c{color:#78350F;background:#FEF3C7}
+.high-c{color:#1E1B4B;background:#EDE9FE}
+
+@media(max-width:720px){.grid{grid-template-columns:1fr}.mod-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    TRLBERT
+    <span class="logo-badge">v1.0</span>
+  </div>
+  <div class="hdr-r">기술준비수준 자동 판정 시스템 &nbsp;·&nbsp; TRL 1–9</div>
+</header>
+
+<div class="container">
+  <div class="grid">
+
+    <!-- ── 왼쪽: 입력 ── -->
+    <div>
+      <div class="card">
+        <div class="ctitle">과제 정보 입력</div>
+
+        <div class="fg">
+          <label>과제명</label>
+          <input type="text" id="f-title" placeholder="예: LLM 기반 온디바이스 추론 최적화">
+        </div>
+
+        <div class="fg">
+          <label>과제 설명 *</label>
+          <textarea id="f-desc" placeholder="기술 내용, 수행 방법, 달성 수준을 자유롭게 입력하세요..."></textarea>
+        </div>
+
+        <div class="fg">
+          <label>사업 분류</label>
+          <select id="f-prog">
+            <option value="">선택 안함</option>
+            <option>NP (NetsPresso)</option>
+            <option>AI-City</option>
+            <option>AI-Industry</option>
+            <option>Global R&D</option>
+            <option>정부 R&D</option>
+          </select>
+        </div>
+
+        <div class="fg">
+          <label>주요 기술 분류</label>
+          <select id="f-tx">
+            <option value="">선택 안함</option>
+            <option>AI / SW</option>
+            <option>HW / 반도체</option>
+            <option>통신 / 네트워크</option>
+            <option>로봇 / 드론</option>
+            <option>의료 / 바이오</option>
+            <option>에너지 / 환경</option>
+          </select>
+        </div>
+
+        <button class="btn" id="btn-go" onclick="analyze()">TRL 판정하기</button>
+
+        <div style="margin-top:14px">
+          <div style="font-size:11px;color:var(--light);margin-bottom:6px">예시 텍스트</div>
+          <div class="presets">
+            <button class="btn btn-sm" onclick="preset(0)">Low TRL</button>
+            <button class="btn btn-sm" onclick="preset(1)">Mid TRL</button>
+            <button class="btn btn-sm" onclick="preset(2)">High TRL</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 판정 이력 -->
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div class="ctitle" style="margin:0">판정 이력</div>
+          <button class="btn btn-sm" onclick="clearHist()">전체 삭제</button>
+        </div>
+        <div id="hist-list">
+          <div class="empty"><div class="empty-title">이력 없음</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 오른쪽: 결과 ── -->
+    <div class="card" id="result-panel">
+
+      <!-- 초기 상태 -->
+      <div class="empty" id="st-empty">
+        <div class="empty-icon">🔬</div>
+        <div class="empty-title">과제 정보를 입력하고<br>판정하기 버튼을 누르세요</div>
+      </div>
+
+      <!-- 로딩 -->
+      <div id="st-loading" style="display:none" class="loading">
+        <div class="spinner"></div>분석 중...
+      </div>
+
+      <!-- 결과 -->
+      <div id="st-result" style="display:none">
+
+        <div class="trl-hero">
+          <div class="trl-big" id="r-num">-</div>
+          <div style="flex:1">
+            <div id="r-badge" class="trl-badge">-</div>
+            <div class="trl-desc" id="r-desc">-</div>
+            <div class="trl-conf" id="r-conf">-</div>
+          </div>
+          <div class="hero-actions">
+            <button class="btn btn-sm btn-ghost" onclick="copyRes()">복사</button>
+            <button class="btn btn-sm btn-ghost" onclick="exportRes()">JSON</button>
+          </div>
+        </div>
+
+        <div class="cls-row" id="r-cls"></div>
+
+        <hr class="sep">
+        <div class="ctitle">TRL 레벨별 스코어</div>
+        <div id="r-bars"></div>
+
+        <hr class="sep">
+        <div class="ctitle" style="margin-bottom:8px">매칭된 증거 키워드</div>
+        <div id="r-kws"></div>
+
+        <hr class="sep">
+        <div class="ctitle" style="margin-bottom:8px">모듈별 기여</div>
+        <div class="mod-grid" id="r-mods"></div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── 데이터 ─────────────────────────────────
+const TM=[
+  {l:1,g:'Low', c:'#059669',tc:'#065F46',bg:'#D1FAE5',d:'기초 원리 발견 및 보고'},
+  {l:2,g:'Low', c:'#10B981',tc:'#065F46',bg:'#D1FAE5',d:'기술 개념 및 응용 정립'},
+  {l:3,g:'Low', c:'#34D399',tc:'#065F46',bg:'#D1FAE5',d:'핵심 기능 개념 증명 (실험실)'},
+  {l:4,g:'Mid', c:'#D97706',tc:'#78350F',bg:'#FEF3C7',d:'실험실 환경 부품/브레드보드 검증'},
+  {l:5,g:'Mid', c:'#F59E0B',tc:'#78350F',bg:'#FEF3C7',d:'유사 환경 부품/브레드보드 검증'},
+  {l:6,g:'Mid', c:'#FBBF24',tc:'#78350F',bg:'#FEF3C7',d:'운용 환경 시스템/서브시스템 실증'},
+  {l:7,g:'High',c:'#6366F1',tc:'#1E1B4B',bg:'#EDE9FE',d:'운용 환경 시스템 시제품 시연'},
+  {l:8,g:'High',c:'#4F46E5',tc:'#1E1B4B',bg:'#EDE9FE',d:'실제 시스템 완성 및 비행 검증'},
+  {l:9,g:'High',c:'#3730A3',tc:'#1E1B4B',bg:'#EDE9FE',d:'실제 임무에서 운용 입증'},
+];
+const GC={Low:'low-c',Mid:'mid-c',High:'high-c'};
+
+const KW={
+  1:['basic principles','basic principle','scientific knowledge','기초 원리','기초원리','이론적 기반','mathematical formulation','peer reviewed','기초 연구','원리 규명','observed and reported'],
+  2:['technology concept','algorithms','synthetic data','feasibility','기술 개념','타당성','application formulated','개념 정립','speculative'],
+  3:['analytical','proof of concept','laboratory demonstration','modeling and simulation','개념 증명','실험실 검증','수치 해석','critical function','analytical studies'],
+  4:['breadboard','laboratory environment','basic functionality','functionally validated','브레드보드','기능 검증','interoperability','low fidelity'],
+  5:['relevant environment','end-to-end','prototype implementations','simulated operational','유사 환경','시제품 구현','medium fidelity','brassboard'],
+  6:['operational environment','high fidelity','engineering feasibility','full-scale','운용 환경','공학적 타당성','실증','critical scaling'],
+  7:['system prototype','actual operational environment','engineering unit','시스템 시제품','실제 운용 환경','운용 타당성','all key functionality'],
+  8:['flight qualified','final configuration','fully integrated','verification and validation','V&V','완전 통합','검증 및 확인','thoroughly debugged'],
+  9:['flight proven','successful mission','actual mission','비행 입증','임무 운용','성공적 운용','sustaining engineering'],
+};
+
+const DB=[
+  {t:'딥러닝 이미지 분류',l:2,x:'기초 연구 알고리즘 설계 모델링 실험실 개념 증명'},
+  {t:'자율주행 센서 융합',l:5,x:'시제품 유사 환경 통합 테스트 기존 시스템 연동'},
+  {t:'군집 드론 운용',l:7,x:'실제 운용 환경 시스템 검증 현장 배치 임무 수행'},
+  {t:'양자 암호화 연구',l:1,x:'이론적 기반 수학적 모델링 시뮬레이션 원리 검증'},
+  {t:'스마트팩토리 AI',l:5,x:'프로토타입 공장 유사 환경 end-to-end 테스트'},
+  {t:'위성 탑재 AI',l:8,x:'위성 운용 환경 완전 통합 검증 V&V 완료 운용'},
+];
+
+const PS=[
+  {t:'딥러닝 기반 영상 분류 알고리즘 연구',d:'기초 원리를 규명하고 이론적 기반을 수립하였다. 수치 해석과 모델링 시뮬레이션을 통해 개념 증명을 수행하였으며, 실험실 환경에서 핵심 기능의 analytical 검증을 완료하였다.'},
+  {t:'자율주행 인지 시스템 개발',d:'시제품을 구현하여 유사 환경에서 성능 검증을 완료하였다. 기존 시스템과의 통합 테스트를 수행하였으며, end-to-end 기능의 engineering feasibility를 실증하였다.'},
+  {t:'위성 탑재 AI 처리 시스템',d:'실제 운용 환경에서 시스템 시제품의 성능을 검증하였다. 운용 하드웨어와 완전 통합하여 모든 핵심 기능을 시연하였으며, verification and validation 절차를 완료하고 성공적 운용 결과를 확인하였다.'},
+];
+
+// ── 스코어링 ────────────────────────────────
+function norm(a){const s=a.reduce((x,y)=>x+y,0)+1e-9;return a.map(v=>v/s);}
+
+function rubric(text){
+  const tl=text.toLowerCase();
+  const scores=[];const hits=[];
+  for(let l=1;l<=9;l++){
+    const h=KW[l].filter(k=>tl.includes(k.toLowerCase()));
+    scores.push(Math.min(h.length/Math.max(KW[l].length*.27,1),1));
+    h.forEach(kw=>hits.push({kw,l,c:TM[l-1].c}));
+  }
+  return {scores,hits};
+}
+
+function simJ(a,b){
+  const wa=new Set(a.toLowerCase().split(/\W+/).filter(w=>w.length>1));
+  const wb=new Set(b.toLowerCase().split(/\W+/).filter(w=>w.length>1));
+  let n=0;wa.forEach(w=>{if(wb.has(w))n++;});
+  return n/Math.max(wa.size,wb.size,1);
+}
+
+function boostRet(text,s){
+  const b=[...s];
+  DB.map(p=>({...p,sim:simJ(text,p.x+' '+p.t)}))
+    .sort((a,c)=>c.sim-a.sim).slice(0,3)
+    .forEach(p=>{if(p.sim>.04)b[Math.max(0,Math.min(8,p.l-1))]+=p.sim*.3;});
+  return b;
+}
+
+function boostPseudo(text,s){
+  const tl=text.toLowerCase();
+  const rh=['연구','이론','기초','설계','research','analytical'].filter(k=>tl.includes(k)).length;
+  const dh=['운용','현장','임무','operational','deployed','mission'].filter(k=>tl.includes(k)).length;
+  const r=rh/(rh+dh+.1);
+  const b=[...s];
+  if(r>.6){b[0]+=.15;b[1]+=.1;b[2]+=.05;}
+  else if(r<.4){b[6]+=.1;b[7]+=.15;b[8]+=.1;}
+  return b;
+}
+
+function run(text){
+  const {scores:s0,hits}=rubric(text);
+  const s1=boostRet(text,s0);
+  const s2=boostPseudo(text,s1);
+  const final=norm(s2);
+  const pi=final.indexOf(Math.max(...final));
+  const cls=norm([0,1,2].map(g=>[[0,1,2],[3,4,5],[6,7,8]][g].reduce((a,i)=>a+final[i],0)));
+  const mods={rubric:norm(s0),ret:norm(s1.map((v,i)=>Math.max(v-s0[i],0))),pseudo:norm(s2.map((v,i)=>Math.max(v-s1[i],0)))};
+  return {final,hits,pi,cls,mods};
+}
+
+// ── UI ──────────────────────────────────────
+let lastR=null;
+
+function preset(i){
+  document.getElementById('f-title').value=PS[i].t;
+  document.getElementById('f-desc').value=PS[i].d;
+}
+
+function show(id){['st-empty','st-loading','st-result'].forEach(s=>{document.getElementById(s).style.display=s===id?'block':'none';});}
+
+function analyze(){
+  const title=document.getElementById('f-title').value.trim();
+  const desc=document.getElementById('f-desc').value.trim();
+  if(!desc){alert('과제 설명을 입력해주세요');return;}
+  show('st-loading');
+  document.getElementById('btn-go').disabled=true;
+  setTimeout(()=>{
+    const res=run(`${title} ${desc}`);
+    lastR={...res,title};
+    render(res,title);
+    saveHist(title,res);
+    document.getElementById('btn-go').disabled=false;
+  },700);
+}
+
+function render(res,title){
+  show('st-result');
+  const m=TM[res.pi];
+  const conf=Math.round(res.final[res.pi]*100);
+
+  // Hero
+  const num=document.getElementById('r-num');
+  num.textContent=m.l;num.style.color=m.c;
+  const badge=document.getElementById('r-badge');
+  badge.textContent=m.g+' TRL';
+  badge.className='trl-badge '+GC[m.g];
+  document.getElementById('r-desc').textContent=m.d;
+  document.getElementById('r-conf').textContent=`신뢰도 ${conf}%  ·  ${title||''}`;
+
+  // Class summary
+  const cn=['Low','Mid','High'],cc=['low-c','mid-c','high-c'];
+  document.getElementById('r-cls').innerHTML=cn.map((n,i)=>`
+    <div class="cls-pill ${cc[i]}">
+      <span class="cpct">${Math.round(res.cls[i]*100)}%</span>
+      <span class="clbl">${n}</span>
+    </div>`).join('');
+
+  // Bars
+  const bEl=document.getElementById('r-bars');bEl.innerHTML='';
+  ['Low','Mid','High'].forEach((grp,gi)=>{
+    const gl=document.createElement('div');
+    gl.className='grp-lbl';
+    gl.textContent=`${grp}  TRL ${gi*3+1}–${gi*3+3}`;
+    bEl.appendChild(gl);
+    [0,1,2].forEach(j=>{
+      const idx=gi*3+j;const meta=TM[idx];
+      const pct=Math.round(res.final[idx]*100);
+      const isPred=idx===res.pi;
+      const row=document.createElement('div');
+      row.className='bar-row'+(isPred?' active':'');
+      row.innerHTML=`
+        <span class="bar-lbl" style="color:${isPred?meta.c:'var(--muted)'}">${isPred?'▶ ':''} ${meta.l}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${meta.c}${isPred?'':'88'}"></div></div>
+        <span class="bar-pct" style="color:${pct>0?meta.c:'var(--light)'}">${pct}%</span>
+        <span class="bar-tag" style="color:${isPred?meta.c:'transparent'}">${isPred?'← 예측':''}</span>`;
+      bEl.appendChild(row);
+    });
+  });
+
+  // Keywords
+  const kEl=document.getElementById('r-kws');kEl.innerHTML='';
+  if(res.hits.length){
+    res.hits.slice(0,18).forEach(({kw,c})=>{
+      const s=document.createElement('span');s.className='kw-chip';
+      s.style.cssText=`border-color:${c};color:${c}`;s.textContent=kw;
+      kEl.appendChild(s);
+    });
+  } else {
+    kEl.innerHTML='<span style="font-size:12px;color:var(--light)">매칭된 키워드 없음</span>';
+  }
+
+  // Modules
+  const modDefs=[
+    {name:'Rubric v2',sub:'TRL 1-9 키워드',c:'#BE185D',s:res.mods.rubric},
+    {name:'Retrieval',sub:'유사 과제 분포',c:'#059669',s:res.mods.ret},
+    {name:'Pseudo-TRL',sub:'시작 단계 추정',c:'#D97706',s:res.mods.pseudo},
+  ];
+  document.getElementById('r-mods').innerHTML=modDefs.map(md=>{
+    const topI=md.s.indexOf(Math.max(...md.s));
+    const topP=Math.round(md.s[topI]*100);
+    return `<div class="mod-card">
+      <div class="mod-name" style="color:${md.c}">${md.name}</div>
+      <div class="mod-sub">${md.sub}</div>
+      <div style="font-size:12px;margin-top:3px;color:var(--muted)">TRL ${topI+1}에 집중 (${topP}%)</div>
+    </div>`;
+  }).join('');
+}
+
+// ── 이력 ────────────────────────────────────
+function saveHist(title,res){
+  const h=JSON.parse(localStorage.getItem('trl_hist')||'[]');
+  h.push({title,trl:TM[res.pi].l,grp:TM[res.pi].g,desc:TM[res.pi].d,ts:Date.now(),res});
+  if(h.length>30)h.shift();
+  localStorage.setItem('trl_hist',JSON.stringify(h));
+  renderHist();
+}
+
+function renderHist(){
+  const h=JSON.parse(localStorage.getItem('trl_hist')||'[]');
+  const el=document.getElementById('hist-list');
+  if(!h.length){el.innerHTML='<div class="empty"><div class="empty-title">이력 없음</div></div>';return;}
+  const ago=ts=>{const d=(Date.now()-ts)/1000;return d<60?'방금':d<3600?Math.floor(d/60)+'분 전':Math.floor(d/3600)+'시간 전';};
+  el.innerHTML=[...h].reverse().map((item,i)=>`
+    <div class="hist-item" onclick="loadHist(${h.length-1-i})">
+      <div class="hist-trl" style="color:${TM[item.trl-1].c}">${item.trl}</div>
+      <div class="hist-info">
+        <div class="hist-title">${item.title||'(제목 없음)'}</div>
+        <div class="hist-sub">${item.grp} TRL · ${item.desc}</div>
+      </div>
+      <div class="hist-time">${ago(item.ts)}</div>
+    </div>`).join('');
+}
+
+function loadHist(i){
+  const h=JSON.parse(localStorage.getItem('trl_hist')||'[]');
+  render(h[i].res,h[i].title);
+}
+
+function clearHist(){
+  if(confirm('판정 이력을 모두 삭제하시겠습니까?')){
+    localStorage.removeItem('trl_hist');renderHist();
+  }
+}
+
+// ── 내보내기 ────────────────────────────────
+function copyRes(){
+  if(!lastR)return;
+  const m=TM[lastR.pi];
+  const txt=`[TRLBERT 판정 결과]\nTRL ${m.l} (${m.g}) — ${m.d}\n신뢰도: ${Math.round(lastR.final[lastR.pi]*100)}%\n과제: ${lastR.title||'-'}\n증거 키워드: ${lastR.hits.map(h=>h.kw).join(', ')}`;
+  navigator.clipboard.writeText(txt).then(()=>alert('클립보드에 복사되었습니다'));
+}
+
+function exportRes(){
+  if(!lastR)return;
+  const m=TM[lastR.pi];
+  const data={
+    predicted_trl:m.l,predicted_class:m.g,confidence:+(lastR.final[lastR.pi].toFixed(3)),
+    trl_description:m.d,title:lastR.title,
+    trl_scores:Object.fromEntries(lastR.final.map((v,i)=>['TRL'+(i+1),+v.toFixed(3)])),
+    class_proba:{Low:+lastR.cls[0].toFixed(3),Mid:+lastR.cls[1].toFixed(3),High:+lastR.cls[2].toFixed(3)},
+    evidence_keywords:lastR.hits.map(h=>h.kw),
+    timestamp:new Date().toISOString()
+  };
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`trl_result_${m.l}.json`;a.click();
+}
+
+// ── 초기화 ──────────────────────────────────
+renderHist();
+</script>
+</body>
+</html>
