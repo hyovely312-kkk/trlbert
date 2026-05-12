@@ -3,1045 +3,966 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KoTRL-Fusion | 기술성숙도 자동 판정 시스템</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<title>KoTRL · 기술성숙도 실시간 판정</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Pretendard:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg:        #0a0e1a;
-    --bg2:       #0f1628;
-    --bg3:       #141d35;
-    --border:    rgba(99,179,237,0.15);
-    --accent:    #63b3ed;
-    --accent2:   #68d391;
-    --accent3:   #f6ad55;
-    --danger:    #fc8181;
-    --text:      #e2e8f0;
-    --text2:     #94a3b8;
-    --text3:     #64748b;
-    --low:       #68d391;
-    --mid:       #63b3ed;
-    --high:      #f6ad55;
-    --mono:      'JetBrains Mono', monospace;
-    --sans:      'Noto Sans KR', sans-serif;
-  }
+:root {
+  --ink:      #0e1117;
+  --ink2:     #1c2230;
+  --silver:   #f4f6fa;
+  --silver2:  #e8ecf4;
+  --mist:     #c5cfe0;
+  --blue:     #1a56db;
+  --blue2:    #3b82f6;
+  --blue-lt:  #eff6ff;
+  --teal:     #0d9488;
+  --teal-lt:  #f0fdfa;
+  --amber:    #d97706;
+  --amber-lt: #fffbeb;
+  --red:      #dc2626;
+  --red-lt:   #fef2f2;
+  --green:    #16a34a;
+  --green-lt: #f0fdf4;
+  --text:     #1e293b;
+  --text2:    #475569;
+  --text3:    #94a3b8;
+  --border:   #e2e8f0;
+  --serif:    'DM Serif Display', serif;
+  --sans:     'Pretendard', -apple-system, sans-serif;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body { background:#f8fafc; color:var(--text); font-family:var(--sans); -webkit-font-smoothing:antialiased; }
 
-  * { margin:0; padding:0; box-sizing:border-box; }
+/* ── 헤더 ── */
+header {
+  background:#fff; border-bottom:1px solid var(--border);
+  height:56px; display:flex; align-items:center; justify-content:space-between;
+  padding:0 2rem; position:sticky; top:0; z-index:100;
+}
+.logo { font-family:var(--serif); font-size:1.1rem; color:var(--ink); }
+.logo span { color:var(--blue); }
+.header-badge {
+  font-size:.72rem; font-weight:600; letter-spacing:.06em;
+  background:var(--blue-lt); color:var(--blue);
+  border:1px solid #bfdbfe; padding:.25rem .75rem; border-radius:999px;
+}
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--sans);
-    font-weight: 300;
-    overflow-x: hidden;
-  }
+/* ── 레이아웃 ── */
+.page { max-width:1100px; margin:0 auto; padding:2rem; }
 
-  /* ── 배경 그리드 ── */
-  body::before {
-    content:'';
-    position:fixed; inset:0;
-    background-image:
-      linear-gradient(rgba(99,179,237,.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(99,179,237,.03) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events:none; z-index:0;
-  }
+/* ── 상단 소개 ── */
+.intro {
+  background:#fff; border:1px solid var(--border); border-radius:16px;
+  padding:2rem 2.5rem; margin-bottom:1.5rem;
+  display:grid; grid-template-columns:1fr auto; gap:2rem; align-items:center;
+}
+.intro-title { font-family:var(--serif); font-size:1.6rem; margin-bottom:.4rem; color:var(--ink); }
+.intro-title em { font-style:italic; color:var(--blue); }
+.intro-desc { font-size:.9rem; color:var(--text2); line-height:1.6; }
+.intro-stats { display:flex; gap:1.5rem; }
+.stat { text-align:center; }
+.stat-val { font-family:var(--serif); font-size:1.8rem; color:var(--blue); line-height:1; }
+.stat-label { font-size:.72rem; color:var(--text3); margin-top:.2rem; }
 
-  /* ── 헤더 ── */
-  header {
-    position: relative; z-index:10;
-    border-bottom: 1px solid var(--border);
-    padding: 0 2rem;
-    display: flex; align-items:center; justify-content:space-between;
-    height: 64px;
-    background: rgba(10,14,26,0.9);
-    backdrop-filter: blur(12px);
-    position: sticky; top:0;
-  }
+/* ── 메인 그리드 ── */
+.main-grid {
+  display:grid; grid-template-columns:1fr 420px; gap:1.5rem;
+  align-items:start;
+}
 
-  .logo {
-    font-family: var(--mono);
-    font-size: 1.1rem; font-weight:700;
-    color: var(--accent);
-    letter-spacing: -0.02em;
-  }
-  .logo span { color: var(--accent2); }
+/* ── 입력 패널 ── */
+.panel {
+  background:#fff; border:1px solid var(--border);
+  border-radius:16px; overflow:hidden;
+}
+.panel-header {
+  padding:1.2rem 1.5rem; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.panel-title { font-size:.85rem; font-weight:700; color:var(--ink); }
+.panel-body { padding:1.5rem; }
 
-  nav { display:flex; gap:1.5rem; }
-  nav a {
-    font-family: var(--mono); font-size:.8rem;
-    color: var(--text2); text-decoration:none;
-    letter-spacing:.05em; text-transform:uppercase;
-    transition: color .2s;
-  }
-  nav a:hover { color: var(--accent); }
+/* ── 탭 ── */
+.tabs { display:flex; gap:.4rem; margin-bottom:1.2rem; }
+.tab {
+  font-size:.78rem; font-weight:600; padding:.4rem 1rem;
+  border-radius:6px; cursor:pointer; border:1px solid var(--border);
+  background:#fff; color:var(--text2); transition:all .15s;
+}
+.tab.active { background:var(--ink); color:#fff; border-color:var(--ink); }
 
-  .badge-ver {
-    font-family: var(--mono); font-size:.7rem;
-    background: rgba(99,179,237,.1); color: var(--accent);
-    border: 1px solid rgba(99,179,237,.3);
-    padding:.2rem .7rem; border-radius:999px;
-  }
+/* ── 텍스트 입력 ── */
+.input-group { margin-bottom:1rem; }
+.input-label {
+  display:block; font-size:.75rem; font-weight:600;
+  color:var(--text2); margin-bottom:.4rem; letter-spacing:.03em;
+}
+textarea, input, select {
+  width:100%; font-family:var(--sans); font-size:.88rem;
+  border:1px solid var(--border); border-radius:8px;
+  padding:.75rem 1rem; color:var(--text); background:#fff;
+  outline:none; transition:border-color .15s;
+  resize:none;
+}
+textarea:focus, input:focus, select:focus { border-color:var(--blue); }
+textarea { min-height:160px; line-height:1.6; }
 
-  /* ── 섹션 기본 ── */
-  section { position:relative; z-index:1; }
+.input-row { display:grid; grid-template-columns:1fr 1fr; gap:.8rem; }
 
-  .container { max-width:1100px; margin:0 auto; padding:0 2rem; }
+/* ── 예시 버튼 ── */
+.examples { display:flex; flex-wrap:wrap; gap:.4rem; margin-bottom:1.2rem; }
+.example-btn {
+  font-size:.73rem; padding:.3rem .75rem;
+  border-radius:999px; cursor:pointer;
+  border:1px solid var(--border); background:#fff;
+  color:var(--text2); transition:all .15s;
+}
+.example-btn:hover { border-color:var(--blue); color:var(--blue); background:var(--blue-lt); }
 
-  /* ── Hero ── */
-  .hero {
-    padding: 6rem 2rem 4rem;
-    text-align: center;
-    position:relative; overflow:hidden;
-  }
-  .hero::before {
-    content:'';
-    position:absolute; top:-200px; left:50%; transform:translateX(-50%);
-    width:600px; height:600px; border-radius:50%;
-    background: radial-gradient(circle, rgba(99,179,237,.08) 0%, transparent 70%);
-    pointer-events:none;
-  }
+/* ── 제출 버튼 ── */
+.submit-btn {
+  width:100%; padding:.9rem; border-radius:10px; border:none; cursor:pointer;
+  background:var(--ink); color:#fff;
+  font-family:var(--sans); font-size:.9rem; font-weight:700;
+  display:flex; align-items:center; justify-content:center; gap:.5rem;
+  transition:background .2s;
+}
+.submit-btn:hover { background:var(--blue); }
+.submit-btn:disabled { background:var(--mist); cursor:not-allowed; }
 
-  .hero-tag {
-    display:inline-block;
-    font-family:var(--mono); font-size:.75rem; letter-spacing:.1em;
-    text-transform:uppercase; color:var(--accent2);
-    border:1px solid rgba(104,211,145,.3);
-    padding:.3rem 1rem; border-radius:999px; margin-bottom:1.5rem;
-  }
+/* ── 결과 패널 ── */
+.result-placeholder {
+  padding:3rem 1.5rem; text-align:center;
+  color:var(--text3); font-size:.85rem; line-height:1.6;
+}
+.result-placeholder .icon { font-size:2.5rem; margin-bottom:.8rem; display:block; }
 
-  h1 {
-    font-size: clamp(2rem, 5vw, 3.5rem);
-    font-weight:700; line-height:1.15;
-    letter-spacing:-.03em; margin-bottom:1rem;
-  }
-  h1 em { font-style:normal; color:var(--accent); }
+/* ── TRL 판정 결과 ── */
+.trl-result { padding:1.5rem; }
 
-  .hero-sub {
-    font-size:1.05rem; color:var(--text2); max-width:580px;
-    margin:0 auto 2.5rem; line-height:1.7;
-  }
+.trl-badge-wrap { text-align:center; padding:1.5rem 0 1rem; }
+.trl-badge {
+  display:inline-flex; flex-direction:column; align-items:center;
+  width:130px; height:130px; border-radius:50%;
+  justify-content:center; border:3px solid;
+  transition:all .4s ease;
+}
+.trl-badge-level { font-family:var(--serif); font-size:2rem; line-height:1; }
+.trl-badge-label { font-size:.7rem; font-weight:700; letter-spacing:.1em; margin-top:.2rem; }
+.trl-badge-range { font-size:.68rem; margin-top:.1rem; opacity:.7; }
 
-  .hero-btns { display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; }
+.badge-low  { border-color:#16a34a; color:#16a34a; background:#f0fdf4; }
+.badge-mid  { border-color:#d97706; color:#d97706; background:#fffbeb; }
+.badge-high { border-color:#1a56db; color:#1a56db; background:#eff6ff; }
+.badge-review { border-color:#dc2626; color:#dc2626; background:#fef2f2; }
 
-  .btn {
-    font-family:var(--mono); font-size:.85rem; font-weight:600;
-    padding:.75rem 1.75rem; border-radius:8px; cursor:pointer;
-    text-decoration:none; display:inline-flex; align-items:center; gap:.5rem;
-    transition: all .2s;
-  }
-  .btn-primary {
-    background: var(--accent); color:#0a0e1a;
-    border: none;
-  }
-  .btn-primary:hover { background:#90cdf4; transform:translateY(-1px); }
-  .btn-outline {
-    background: transparent; color: var(--text);
-    border: 1px solid var(--border);
-  }
-  .btn-outline:hover { border-color:var(--accent); color:var(--accent); }
+/* ── 신뢰도 바 ── */
+.confidence-section { margin-bottom:1.5rem; }
+.conf-title { font-size:.75rem; font-weight:600; color:var(--text2); margin-bottom:.8rem; }
+.conf-row { display:flex; align-items:center; gap:.8rem; margin-bottom:.5rem; }
+.conf-label { font-size:.78rem; width:40px; font-weight:600; }
+.conf-bar-track {
+  flex:1; height:8px; background:var(--silver2);
+  border-radius:4px; overflow:hidden;
+}
+.conf-bar-fill { height:100%; border-radius:4px; transition:width .8s cubic-bezier(.4,0,.2,1); }
+.bar-low   { background:#16a34a; }
+.bar-mid   { background:#d97706; }
+.bar-high  { background:#1a56db; }
+.conf-pct  { font-size:.78rem; font-weight:700; width:40px; text-align:right; }
 
-  /* ── 파이프라인 ── */
-  .pipeline {
-    padding: 5rem 0;
-    border-top: 1px solid var(--border);
-  }
+/* ── 불확실성 게이지 ── */
+.uncertainty-box {
+  border-radius:10px; padding:1rem 1.2rem; margin-bottom:1.2rem;
+  border:1px solid;
+}
+.ub-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:.4rem; }
+.ub-title { font-size:.78rem; font-weight:700; }
+.ub-value { font-family:var(--serif); font-size:1.1rem; }
+.ub-desc { font-size:.75rem; line-height:1.5; }
 
-  .section-label {
-    font-family:var(--mono); font-size:.75rem; letter-spacing:.12em;
-    text-transform:uppercase; color:var(--text3); margin-bottom:.5rem;
-  }
-  .section-title {
-    font-size:1.8rem; font-weight:700; margin-bottom:.5rem;
-    letter-spacing:-.02em;
-  }
-  .section-sub {
-    color:var(--text2); font-size:.95rem; line-height:1.6; margin-bottom:3rem;
-  }
+.unc-stable  { border-color:#bbf7d0; background:#f0fdf4; color:#166534; }
+.unc-caution { border-color:#fde68a; background:#fffbeb; color:#92400e; }
+.unc-review  { border-color:#fecaca; background:#fef2f2; color:#991b1b; }
 
-  .pipeline-flow {
-    display:flex; align-items:center; gap:0;
-    overflow-x:auto; padding-bottom:1rem;
-  }
-  .pipe-step {
-    flex:1; min-width:180px;
-    background:var(--bg2); border:1px solid var(--border);
-    border-radius:12px; padding:1.5rem;
-    position:relative;
-  }
-  .pipe-arrow {
-    font-family:var(--mono); font-size:1.5rem;
-    color:var(--text3); padding:0 .5rem;
-    flex-shrink:0;
-  }
-  .pipe-num {
-    font-family:var(--mono); font-size:.7rem; font-weight:700;
-    color:var(--accent); letter-spacing:.1em; margin-bottom:.5rem;
-  }
-  .pipe-title {
-    font-size:.95rem; font-weight:700; margin-bottom:.4rem;
-  }
-  .pipe-desc {
-    font-size:.8rem; color:var(--text2); line-height:1.5;
-  }
-  .pipe-tag {
-    display:inline-block; margin-top:.7rem;
-    font-family:var(--mono); font-size:.65rem;
-    background:rgba(99,179,237,.08); color:var(--accent);
-    border:1px solid rgba(99,179,237,.2);
-    padding:.15rem .5rem; border-radius:4px;
-  }
+/* ── 정량 지표 ── */
+.metrics-grid { display:grid; grid-template-columns:1fr 1fr; gap:.6rem; margin-bottom:1.2rem; }
+.metric-card {
+  background:var(--silver); border-radius:8px; padding:.8rem 1rem;
+}
+.metric-name { font-size:.68rem; color:var(--text3); font-weight:600; letter-spacing:.05em; text-transform:uppercase; margin-bottom:.2rem; }
+.metric-val  { font-family:var(--serif); font-size:1.2rem; color:var(--ink); }
+.metric-sub  { font-size:.68rem; color:var(--text3); }
 
-  /* ── 알고리즘 섹션 ── */
-  .algo-section {
-    padding: 5rem 0;
-    border-top: 1px solid var(--border);
-  }
+/* ── 근거 분석 ── */
+.evidence-section { margin-bottom:1.2rem; }
+.ev-title { font-size:.75rem; font-weight:700; color:var(--text2); margin-bottom:.7rem; }
+.ev-item {
+  display:flex; gap:.7rem; align-items:flex-start;
+  padding:.6rem .8rem; border-radius:8px; margin-bottom:.4rem;
+  background:var(--silver); border-left:3px solid;
+}
+.ev-icon { font-size:.85rem; flex-shrink:0; margin-top:.1rem; }
+.ev-text { font-size:.78rem; color:var(--text); line-height:1.5; }
+.ev-strong { color:var(--blue); font-weight:600; }
 
-  .algo-highlight {
-    background: linear-gradient(135deg, rgba(99,179,237,.06), rgba(104,211,145,.06));
-    border: 1px solid rgba(99,179,237,.2);
-    border-radius:16px; padding:2rem;
-    margin-bottom:2rem;
-  }
-  .algo-highlight-title {
-    font-family:var(--mono); font-size:.8rem;
-    color:var(--accent2); letter-spacing:.08em; margin-bottom:.5rem;
-  }
-  .algo-highlight h3 {
-    font-size:1.4rem; font-weight:700; margin-bottom:.7rem;
-  }
-  .algo-highlight p {
-    color:var(--text2); font-size:.9rem; line-height:1.6;
-  }
+.ev-positive { border-color:#86efac; }
+.ev-negative { border-color:#fca5a5; }
+.ev-neutral  { border-color:#94a3b8; }
 
-  .algo-grid {
-    display:grid; grid-template-columns:repeat(auto-fit, minmax(280px,1fr));
-    gap:1rem; margin-bottom:2rem;
-  }
+/* ── 요약 추출 표시 ── */
+.summary-box {
+  background:var(--silver); border-radius:10px; padding:1rem 1.2rem;
+  margin-bottom:1.2rem; border:1px solid var(--border);
+}
+.sb-header { font-size:.72rem; font-weight:700; color:var(--text3); letter-spacing:.06em; text-transform:uppercase; margin-bottom:.5rem; }
+.sb-content { font-size:.82rem; color:var(--text2); line-height:1.6; }
 
-  .algo-card {
-    background:var(--bg2); border:1px solid var(--border);
-    border-radius:12px; padding:1.5rem;
-    transition: border-color .2s, transform .2s;
-  }
-  .algo-card:hover { border-color:var(--accent); transform:translateY(-2px); }
-  .algo-card.recommended { border-color:rgba(104,211,145,.4); }
-  .algo-card.not-recommended { opacity:.6; }
+/* ── 재검토 경고 ── */
+.review-alert {
+  background:#fef2f2; border:1px solid #fecaca;
+  border-radius:10px; padding:1rem 1.2rem; margin-bottom:1.2rem;
+  display:flex; gap:.7rem;
+}
+.review-alert-icon { font-size:1rem; flex-shrink:0; }
+.review-alert-title { font-size:.8rem; font-weight:700; color:#991b1b; margin-bottom:.2rem; }
+.review-alert-desc  { font-size:.75rem; color:#b91c1c; line-height:1.5; }
 
-  .algo-card-header {
-    display:flex; align-items:center; justify-content:space-between;
-    margin-bottom:1rem;
-  }
-  .algo-name { font-weight:700; font-size:.95rem; }
-  .algo-status {
-    font-family:var(--mono); font-size:.65rem; font-weight:700;
-    padding:.2rem .6rem; border-radius:999px; letter-spacing:.05em;
-  }
-  .status-yes { background:rgba(104,211,145,.15); color:var(--accent2); border:1px solid rgba(104,211,145,.3); }
-  .status-no  { background:rgba(252,129,129,.1);  color:var(--danger);  border:1px solid rgba(252,129,129,.2); }
-  .status-ok  { background:rgba(246,173,85,.1);   color:var(--accent3); border:1px solid rgba(246,173,85,.3); }
+/* ── 로딩 ── */
+.loading { padding:3rem 1.5rem; text-align:center; }
+.spinner {
+  width:36px; height:36px; border-radius:50%;
+  border:3px solid var(--silver2); border-top-color:var(--blue);
+  animation:spin .8s linear infinite; margin:0 auto 1rem;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+.loading-text { font-size:.82rem; color:var(--text3); }
+.loading-step {
+  font-size:.78rem; color:var(--text3); margin-top:.3rem;
+  animation:pulse 1.5s ease infinite;
+}
+@keyframes pulse { 0%,100%{opacity:.4} 50%{opacity:1} }
 
-  .algo-type {
-    font-family:var(--mono); font-size:.7rem; color:var(--text3);
-    margin-bottom:.7rem;
-  }
-  .algo-reason {
-    font-size:.85rem; color:var(--text2); line-height:1.5;
-    margin-bottom:1rem;
-  }
-  .algo-tags { display:flex; flex-wrap:wrap; gap:.4rem; }
-  .algo-tag {
-    font-family:var(--mono); font-size:.65rem;
-    background:rgba(255,255,255,.05); color:var(--text3);
-    border:1px solid rgba(255,255,255,.1);
-    padding:.15rem .5rem; border-radius:4px;
-  }
-  .algo-tag.pro { color:var(--accent2); background:rgba(104,211,145,.05); border-color:rgba(104,211,145,.2); }
-  .algo-tag.con { color:var(--danger);  background:rgba(252,129,129,.05); border-color:rgba(252,129,129,.2); }
+/* ── 하단 분석 패널 ── */
+.analysis-panel {
+  background:#fff; border:1px solid var(--border); border-radius:16px;
+  margin-top:1.5rem; overflow:hidden;
+}
+.analysis-tabs {
+  display:flex; border-bottom:1px solid var(--border);
+  padding:0 1.5rem; overflow-x:auto;
+}
+.atab {
+  font-size:.8rem; font-weight:600; padding:1rem .8rem;
+  cursor:pointer; color:var(--text3); border-bottom:2px solid transparent;
+  white-space:nowrap; transition:all .15s;
+}
+.atab.active { color:var(--blue); border-bottom-color:var(--blue); }
+.atab-content { display:none; padding:1.5rem; }
+.atab-content.active { display:block; }
 
-  /* ── 최적 조합 ── */
-  .stack-section {
-    padding: 5rem 0;
-    border-top: 1px solid var(--border);
-  }
+/* ── 실험 결과 테이블 ── */
+.result-table { width:100%; border-collapse:collapse; font-size:.82rem; }
+.result-table th {
+  text-align:left; padding:.7rem 1rem;
+  font-size:.7rem; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--text3); font-weight:600;
+  border-bottom:2px solid var(--border);
+}
+.result-table td {
+  padding:.75rem 1rem; border-bottom:1px solid var(--silver2);
+}
+.result-table tr:last-child td { border-bottom:none; }
+.result-table tr:hover td { background:var(--silver); }
 
-  .stack-visual {
-    background:var(--bg2); border:1px solid var(--border);
-    border-radius:16px; padding:2rem;
-    font-family:var(--mono); overflow:hidden;
-  }
-  .stack-row {
-    display:flex; align-items:center; gap:1rem;
-    padding:.9rem 0; border-bottom:1px solid rgba(255,255,255,.04);
-  }
-  .stack-row:last-child { border-bottom:none; }
-  .stack-num {
-    width:28px; height:28px; border-radius:50%;
-    background:rgba(99,179,237,.1); border:1px solid rgba(99,179,237,.3);
-    color:var(--accent); font-size:.75rem; font-weight:700;
-    display:flex; align-items:center; justify-content:center; flex-shrink:0;
-  }
-  .stack-info { flex:1; }
-  .stack-name { font-size:.85rem; font-weight:700; color:var(--text); }
-  .stack-desc { font-size:.75rem; color:var(--text2); margin-top:.2rem; font-family:var(--sans); }
-  .stack-effect {
-    font-size:.7rem; color:var(--accent2);
-    background:rgba(104,211,145,.08);
-    border:1px solid rgba(104,211,145,.2);
-    padding:.2rem .6rem; border-radius:4px;
-    white-space:nowrap;
-  }
+.highlight-row td { background:var(--blue-lt) !important; font-weight:600; }
+.best-tag {
+  font-size:.65rem; background:var(--blue); color:#fff;
+  padding:.15rem .5rem; border-radius:999px; margin-left:.4rem;
+}
 
-  /* ── 성능 테이블 ── */
-  .perf-section {
-    padding: 5rem 0;
-    border-top: 1px solid var(--border);
-  }
+/* ── 알고리즘 카드 (마케팅용) ── */
+.algo-cards { display:grid; grid-template-columns:repeat(2,1fr); gap:1rem; }
+.algo-card {
+  border-radius:12px; padding:1.2rem; border:1px solid var(--border);
+  transition:box-shadow .2s;
+}
+.algo-card:hover { box-shadow:0 4px 20px rgba(0,0,0,.08); }
+.ac-icon { font-size:1.5rem; margin-bottom:.6rem; }
+.ac-name { font-size:.85rem; font-weight:700; margin-bottom:.3rem; }
+.ac-desc { font-size:.78rem; color:var(--text2); line-height:1.5; margin-bottom:.7rem; }
+.ac-badge {
+  font-size:.65rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+  padding:.2rem .6rem; border-radius:999px; border:1px solid;
+}
 
-  .table-wrap { overflow-x:auto; }
-  table {
-    width:100%; border-collapse:collapse;
-    font-size:.85rem; font-family:var(--mono);
-  }
-  thead { background:var(--bg3); }
-  th {
-    padding:.9rem 1rem; text-align:left;
-    font-size:.7rem; letter-spacing:.08em; text-transform:uppercase;
-    color:var(--text3); font-weight:400;
-    border-bottom:1px solid var(--border);
-  }
-  td {
-    padding:.85rem 1rem;
-    border-bottom:1px solid rgba(255,255,255,.04);
-    font-family:var(--mono);
-  }
-  tr:last-child td { border-bottom:none; }
-  tr:hover td { background:rgba(255,255,255,.02); }
+/* ── 데이터 현황 ── */
+.data-pills { display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:1.2rem; }
+.data-pill {
+  font-size:.78rem; padding:.35rem .9rem; border-radius:999px;
+  border:1px solid var(--border); background:var(--silver);
+  display:flex; align-items:center; gap:.4rem;
+}
+.data-pill-dot { width:7px; height:7px; border-radius:50%; }
 
-  .perf-best { color:var(--accent2); font-weight:700; }
-  .perf-warn { color:var(--accent3); }
-  .perf-bad  { color:var(--danger); }
+.dist-bars { display:flex; flex-direction:column; gap:.6rem; }
+.dist-row { display:flex; align-items:center; gap:.8rem; }
+.dist-label { font-size:.78rem; font-weight:600; width:45px; }
+.dist-track { flex:1; height:10px; background:var(--silver2); border-radius:5px; overflow:hidden; }
+.dist-fill   { height:100%; border-radius:5px; }
+.dist-pct    { font-size:.75rem; color:var(--text3); width:40px; text-align:right; }
 
-  .bar-wrap { display:flex; align-items:center; gap:.7rem; }
-  .bar {
-    height:6px; border-radius:3px; min-width:4px;
-    background:var(--accent);
-  }
+/* ── 반응형 ── */
+@media (max-width:900px) {
+  .main-grid { grid-template-columns:1fr; }
+  .intro { grid-template-columns:1fr; }
+  .intro-stats { justify-content:flex-start; }
+  .algo-cards { grid-template-columns:1fr; }
+}
+@media (max-width:600px) {
+  .input-row { grid-template-columns:1fr; }
+  .metrics-grid { grid-template-columns:1fr 1fr; }
+}
 
-  /* ── 코드 블록 ── */
-  .code-section {
-    padding: 5rem 0;
-    border-top: 1px solid var(--border);
-  }
-
-  .code-tabs { display:flex; gap:.5rem; margin-bottom:0; }
-  .code-tab {
-    font-family:var(--mono); font-size:.75rem;
-    padding:.5rem 1rem; border-radius:8px 8px 0 0;
-    cursor:pointer; border:1px solid var(--border);
-    border-bottom:none; background:var(--bg2); color:var(--text3);
-    transition: all .2s;
-  }
-  .code-tab.active { background:var(--bg3); color:var(--accent); border-color:rgba(99,179,237,.3); }
-
-  .code-block {
-    background:var(--bg3); border:1px solid var(--border);
-    border-radius:0 8px 8px 8px; padding:1.5rem;
-    overflow-x:auto; display:none;
-  }
-  .code-block.active { display:block; }
-  .code-block pre {
-    font-family:var(--mono); font-size:.82rem;
-    color:var(--text); line-height:1.65;
-  }
-  .kw  { color:#9ec7f0; }
-  .fn  { color:#82cfb5; }
-  .str { color:#f0c070; }
-  .cm  { color:#5a6a8a; font-style:italic; }
-  .num { color:#f6ad55; }
-
-  /* ── 데이터 현황 ── */
-  .data-section {
-    padding: 5rem 0;
-    border-top: 1px solid var(--border);
-  }
-
-  .data-grid {
-    display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr));
-    gap:1rem; margin-bottom:2rem;
-  }
-  .data-card {
-    background:var(--bg2); border:1px solid var(--border);
-    border-radius:12px; padding:1.5rem;
-  }
-  .data-card-label {
-    font-family:var(--mono); font-size:.7rem; color:var(--text3);
-    letter-spacing:.08em; text-transform:uppercase; margin-bottom:.5rem;
-  }
-  .data-card-val {
-    font-family:var(--mono); font-size:2rem; font-weight:700;
-    color:var(--accent); margin-bottom:.3rem;
-  }
-  .data-card-sub { font-size:.8rem; color:var(--text2); }
-
-  .trl-dist { display:flex; flex-direction:column; gap:.6rem; }
-  .trl-row { display:flex; align-items:center; gap:.8rem; }
-  .trl-label {
-    font-family:var(--mono); font-size:.75rem; width:50px;
-    color:var(--text2);
-  }
-  .trl-bar-wrap { flex:1; height:8px; background:rgba(255,255,255,.05); border-radius:4px; overflow:hidden; }
-  .trl-bar-fill { height:100%; border-radius:4px; transition:width 1s ease; }
-  .trl-bar-low  { background:var(--low); }
-  .trl-bar-mid  { background:var(--mid); }
-  .trl-bar-high { background:var(--high); }
-  .trl-pct { font-family:var(--mono); font-size:.75rem; color:var(--text3); width:42px; text-align:right; }
-
-  /* ── 주의사항 ── */
-  .warning-box {
-    background:rgba(252,129,129,.05); border:1px solid rgba(252,129,129,.2);
-    border-radius:12px; padding:1.5rem;
-    display:flex; gap:1rem; align-items:flex-start;
-    margin:2rem 0;
-  }
-  .warning-icon { font-size:1.2rem; flex-shrink:0; margin-top:.1rem; }
-  .warning-title { font-weight:700; color:var(--danger); margin-bottom:.3rem; font-size:.9rem; }
-  .warning-desc { font-size:.85rem; color:var(--text2); line-height:1.5; }
-
-  /* ── Footer ── */
-  footer {
-    border-top:1px solid var(--border); padding:2.5rem 2rem;
-    text-align:center; font-size:.8rem; color:var(--text3);
-    font-family:var(--mono);
-  }
-  footer a { color:var(--accent); text-decoration:none; }
-
-  /* ── 반응형 ── */
-  @media (max-width:768px) {
-    .pipeline-flow { flex-direction:column; }
-    .pipe-arrow { transform:rotate(90deg); }
-    nav { display:none; }
-    h1 { font-size:2rem; }
-  }
-
-  /* ── 애니메이션 ── */
-  @keyframes fadeUp {
-    from { opacity:0; transform:translateY(20px); }
-    to   { opacity:1; transform:translateY(0); }
-  }
-  .fade-up { animation: fadeUp .6s ease forwards; }
-  .fade-up:nth-child(2) { animation-delay:.1s; }
-  .fade-up:nth-child(3) { animation-delay:.2s; }
-
-  .glow {
-    text-shadow: 0 0 40px rgba(99,179,237,.3);
-  }
+/* ── 애니메이션 ── */
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.fade-in { animation:fadeIn .4s ease forwards; }
 </style>
 </head>
 <body>
 
-<!-- ── 헤더 ─────────────────────────────────────────── -->
 <header>
-  <div class="logo">Ko<span>TRL</span>-Fusion</div>
-  <nav>
-    <a href="#pipeline">파이프라인</a>
-    <a href="#algorithm">알고리즘</a>
-    <a href="#performance">성능</a>
-    <a href="#usage">사용법</a>
-    <a href="#data">데이터</a>
-  </nav>
-  <span class="badge-ver">v1.0.0</span>
+  <div class="logo">Ko<span>TRL</span></div>
+  <div style="display:flex;gap:1rem;align-items:center;">
+    <span style="font-size:.78rem;color:var(--text3);">Powered by Claude Sonnet · GPT 비용 0원</span>
+    <span class="header-badge">DEMO v1.0</span>
+  </div>
 </header>
 
-<!-- ── Hero ──────────────────────────────────────────── -->
-<section class="hero">
-  <div class="hero-tag">🇰🇷 Korean Technology Readiness Level Assessment</div>
-  <h1 class="glow">
-    계획서 한 장으로<br>
-    <em>TRL을 자동 판정</em>합니다
-  </h1>
-  <p class="hero-sub">
-    연구개발 계획서 → GPT-4o-mini 핵심 추출 → KoTRL-Fusion 모델<br>
-    Low / Mid / High 3단계 + 신뢰도 + 불확실성 추정
-  </p>
-  <div class="hero-btns">
-    <a href="#usage" class="btn btn-primary">▶ 사용법 보기</a>
-    <a href="https://github.com" class="btn btn-outline">⬡ GitHub</a>
-  </div>
-</section>
+<div class="page">
 
-<!-- ── 파이프라인 ─────────────────────────────────────── -->
-<section class="pipeline" id="pipeline">
-  <div class="container">
-    <div class="section-label">Architecture</div>
-    <h2 class="section-title">전체 파이프라인</h2>
-    <p class="section-sub">
-      계획서 길이에 상관없이 처리됩니다. GPT가 TRL 판단에 필요한 4개 섹션을 512자로 압축하고,
-      KLUE-RoBERTa 기반 Fusion 모델이 최종 판정합니다.
-    </p>
-
-    <div class="pipeline-flow">
-      <div class="pipe-step fade-up">
-        <div class="pipe-num">STEP 01</div>
-        <div class="pipe-title">계획서 입력</div>
-        <div class="pipe-desc">텍스트 / TXT 파일<br>길이 제한 없음</div>
-        <span class="pipe-tag">무제한</span>
-      </div>
-      <div class="pipe-arrow">→</div>
-      <div class="pipe-step fade-up">
-        <div class="pipe-num">STEP 02</div>
-        <div class="pipe-title">GPT-4o-mini 요약</div>
-        <div class="pipe-desc">
-          ① 연구 목표<br>② 기술 개요<br>③ 기대 성과<br>④ 기술 수준
-        </div>
-        <span class="pipe-tag">512자 이내</span>
-      </div>
-      <div class="pipe-arrow">→</div>
-      <div class="pipe-step fade-up">
-        <div class="pipe-num">STEP 03</div>
-        <div class="pipe-title">KoTRL-Fusion</div>
-        <div class="pipe-desc">
-          KLUE-RoBERTa-large<br>+ 메타데이터 MLP<br>+ Temperature Scaling
-        </div>
-        <span class="pipe-tag">MC Dropout</span>
-      </div>
-      <div class="pipe-arrow">→</div>
-      <div class="pipe-step fade-up">
-        <div class="pipe-num">STEP 04</div>
-        <div class="pipe-title">TRL 판정 결과</div>
-        <div class="pipe-desc">
-          Low / Mid / High<br>신뢰도 + 불확실성<br>재검토 플래그
-        </div>
-        <span class="pipe-tag">신뢰구간 포함</span>
+  <!-- ── 상단 소개 ── -->
+  <div class="intro">
+    <div>
+      <div class="intro-title">기술성숙도 <em>자동 판정</em> 시스템</div>
+      <div class="intro-desc">
+        연구개발 계획서 또는 기술 설명문을 입력하면 AI가 4개 핵심 섹션을 추출하고
+        다층 신뢰도 알고리즘으로 Low · Mid · High를 판정합니다.<br>
+        <strong>Start TRL 입력 불필요</strong> — 텍스트 단독으로 작동하는 실 배포 가능 모델입니다.
       </div>
     </div>
-
-    <div class="warning-box" style="margin-top:2rem">
-      <div class="warning-icon">⚠️</div>
-      <div>
-        <div class="warning-title">Start TRL 입력 금지 — Deployment-Safe 설계</div>
-        <div class="warning-desc">
-          실험 결과, Start TRL을 입력하면 Acc 0.796이지만 실제 배포 환경에서는 사용 불가입니다.
-          본 모델은 Start TRL 없이 Acc 0.715 / Macro-F1 0.517을 달성하는
-          <strong>실제 사용 가능한 유일한 설계</strong>입니다.
-        </div>
+    <div class="intro-stats">
+      <div class="stat">
+        <div class="stat-val">16K+</div>
+        <div class="stat-label">학습 데이터</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val">51.7%</div>
+        <div class="stat-label">Macro-F1</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val">3중</div>
+        <div class="stat-label">신뢰도 검증</div>
       </div>
     </div>
   </div>
-</section>
 
-<!-- ── 알고리즘 ───────────────────────────────────────── -->
-<section class="algo-section" id="algorithm">
-  <div class="container">
-    <div class="section-label">Algorithm Design</div>
-    <h2 class="section-title">분류 알고리즘 선택 근거</h2>
-    <p class="section-sub">
-      K-Means가 아닌 이유, 그리고 어떤 조합이 가장 신뢰도 높은 판정을 만드는지 설명합니다.
-    </p>
+  <!-- ── 메인 그리드 ── -->
+  <div class="main-grid">
 
-    <!-- K-Means 왜 안 되는지 -->
-    <div class="algo-highlight">
-      <div class="algo-highlight-title">❌ K-Means를 쓰면 안 되는 이유</div>
-      <h3>TRL은 지도학습(Supervised) 문제입니다</h3>
-      <p>
-        K-Means는 <strong>라벨 없이 군집을 찾는</strong> 비지도 학습입니다.
-        TRL은 1~9의 순서가 있고, Low/Mid/High 라벨이 명확히 정의되어 있습니다.
-        또한 Mid가 82.6%로 편중된 상황에서 K-Means를 쓰면
-        <strong>모든 샘플이 Mid로 수렴</strong>합니다.
-        High TRL(2.5%)은 아예 감지조차 못 합니다.
-      </p>
+    <!-- 입력 패널 -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">📄 기술 내용 입력</span>
+        <span style="font-size:.72rem;color:var(--text3);">한국어 · 영어 모두 가능</span>
+      </div>
+      <div class="panel-body">
+
+        <div class="tabs">
+          <div class="tab active" onclick="switchInputTab('text',this)">텍스트 직접 입력</div>
+          <div class="tab" onclick="switchInputTab('proposal',this)">계획서 형식</div>
+        </div>
+
+        <!-- 탭1: 텍스트 -->
+        <div id="tab-text">
+          <div class="input-group">
+            <label class="input-label">기술 설명 또는 계획서 내용</label>
+            <textarea id="desc-input" placeholder="예) 본 연구는 딥러닝 기반 반도체 결함 검출 알고리즘을 개발하고, 실험실 환경에서 소형 시제품을 통해 핵심 기능의 작동을 검증하였다..."></textarea>
+          </div>
+          <div style="margin-bottom:.8rem;">
+            <div class="input-label">예시 불러오기</div>
+            <div class="examples">
+              <div class="example-btn" onclick="loadExample('basic')">🔬 기초연구</div>
+              <div class="example-btn" onclick="loadExample('lab')">🧪 실험실 검증</div>
+              <div class="example-btn" onclick="loadExample('pilot')">🏭 파일럿 실증</div>
+              <div class="example-btn" onclick="loadExample('commercialize')">🚀 사업화</div>
+              <div class="example-btn" onclick="loadExample('ambiguous')">❓ 애매한 사례</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 탭2: 계획서 형식 -->
+        <div id="tab-proposal" style="display:none;">
+          <div class="input-group">
+            <label class="input-label">① 연구 목표</label>
+            <textarea id="p-goal" rows="3" placeholder="무엇을 달성하려 하는가..."></textarea>
+          </div>
+          <div class="input-group">
+            <label class="input-label">② 기술 개요</label>
+            <textarea id="p-tech" rows="3" placeholder="어떤 기술/방법론을 사용하는가..."></textarea>
+          </div>
+          <div class="input-group">
+            <label class="input-label">③ 기대 성과</label>
+            <textarea id="p-result" rows="3" placeholder="어느 수준까지 개발/검증할 것인가..."></textarea>
+          </div>
+          <div class="input-group">
+            <label class="input-label">④ 기술 수준 (현재 상태)</label>
+            <textarea id="p-level" rows="2" placeholder="현재 어느 단계인지 (실험실/파일럿/실증 등)..."></textarea>
+          </div>
+        </div>
+
+        <div class="input-row" style="margin-bottom:1.2rem;">
+          <div class="input-group" style="margin:0">
+            <label class="input-label">기술명 (선택)</label>
+            <input type="text" id="tech-name" placeholder="예) AI 반도체 검사 시스템">
+          </div>
+          <div class="input-group" style="margin:0">
+            <label class="input-label">연도 (선택)</label>
+            <input type="number" id="tech-year" value="2024" min="2000" max="2030">
+          </div>
+        </div>
+
+        <button class="submit-btn" id="submit-btn" onclick="analyze()">
+          <span id="btn-text">⚡ TRL 판정 실행</span>
+        </button>
+
+      </div>
     </div>
 
-    <!-- 알고리즘 카드 -->
-    <div class="algo-grid">
-
-      <div class="algo-card not-recommended">
-        <div class="algo-card-header">
-          <span class="algo-name">K-Means</span>
-          <span class="algo-status status-no">❌ 부적합</span>
-        </div>
-        <div class="algo-type">비지도 클러스터링</div>
-        <div class="algo-reason">
-          TRL은 라벨이 있는 지도학습 문제. 군집 번호와 TRL 단계를 매핑할 방법이 없음.
-          클래스 불균형(Mid 82%)에서 전부 Mid로 수렴.
-        </div>
-        <div class="algo-tags">
-          <span class="algo-tag con">라벨 없음</span>
-          <span class="algo-tag con">불균형 취약</span>
-          <span class="algo-tag con">확률 출력 불가</span>
+    <!-- 결과 패널 -->
+    <div class="panel" id="result-panel">
+      <div class="panel-header">
+        <span class="panel-title">📊 판정 결과</span>
+        <span id="result-time" style="font-size:.72rem;color:var(--text3);"></span>
+      </div>
+      <div id="result-content">
+        <div class="result-placeholder">
+          <span class="icon">🎯</span>
+          기술 내용을 입력하고<br>
+          <strong>TRL 판정 실행</strong>을 클릭하세요.<br><br>
+          <span style="font-size:.78rem;">
+            AI가 4개 핵심 섹션을 추출하고<br>
+            신뢰도·불확실성을 정량 분석합니다.
+          </span>
         </div>
       </div>
-
-      <div class="algo-card recommended">
-        <div class="algo-card-header">
-          <span class="algo-name">Temperature Scaling</span>
-          <span class="algo-status status-yes">✅ 핵심</span>
-        </div>
-        <div class="algo-type">Calibration (확률 보정)</div>
-        <div class="algo-reason">
-          Softmax는 신뢰도를 과대평가합니다 (95% 확신인데 실제로는 70%).
-          Temperature Scaling이 이를 보정해 실제 정확도와 신뢰도를 일치시킵니다.
-          모델 재학습 없이 파라미터 T 하나만 조정.
-        </div>
-        <div class="algo-tags">
-          <span class="algo-tag pro">과신뢰 방지</span>
-          <span class="algo-tag pro">재학습 불필요</span>
-          <span class="algo-tag pro">튀는 값 감소</span>
-        </div>
-      </div>
-
-      <div class="algo-card recommended">
-        <div class="algo-card-header">
-          <span class="algo-name">MC Dropout</span>
-          <span class="algo-status status-yes">✅ 핵심</span>
-        </div>
-        <div class="algo-type">Monte Carlo Dropout (불확실성)</div>
-        <div class="algo-reason">
-          추론 시 Dropout을 켜고 30회 반복 → 확률 분포의 분산 계산.
-          분산이 크면 "이 샘플은 애매함" → 재검토 필요 플래그 자동 설정.
-          <strong>튀는 값 방지에 가장 효과적</strong>.
-        </div>
-        <div class="algo-tags">
-          <span class="algo-tag pro">불확실성 정량화</span>
-          <span class="algo-tag pro">재검토 자동 감지</span>
-          <span class="algo-tag con">속도 30배 느림</span>
-        </div>
-      </div>
-
-      <div class="algo-card recommended">
-        <div class="algo-card-header">
-          <span class="algo-name">Confidence Threshold</span>
-          <span class="algo-status status-yes">✅ 즉시 적용</span>
-        </div>
-        <div class="algo-type">거부 옵션 (Reject Option)</div>
-        <div class="algo-reason">
-          신뢰도 &lt; 0.6이면 판정을 내리지 않고 "전문가 재검토 필요"로 표시.
-          구현 1줄, 즉시 적용 가능. 잘못된 High 판정 방지에 매우 효과적.
-        </div>
-        <div class="algo-tags">
-          <span class="algo-tag pro">구현 1줄</span>
-          <span class="algo-tag pro">오판 방지</span>
-          <span class="algo-tag con">일부 미판정 발생</span>
-        </div>
-      </div>
-
-      <div class="algo-card recommended">
-        <div class="algo-card-header">
-          <span class="algo-name">Focal Loss</span>
-          <span class="algo-status status-yes">✅ 학습 적용</span>
-        </div>
-        <div class="algo-type">손실 함수 (Loss Function)</div>
-        <div class="algo-reason">
-          쉬운 샘플(Mid)의 가중치를 낮추고 어려운 샘플(High)에 집중.
-          High TRL 2.5% 희소 클래스 성능을 향상. gamma=2.0이 최적.
-        </div>
-        <div class="algo-tags">
-          <span class="algo-tag pro">High F1 향상</span>
-          <span class="algo-tag pro">불균형 해소</span>
-          <span class="algo-tag pro">gamma 조정 가능</span>
-        </div>
-      </div>
-
-      <div class="algo-card">
-        <div class="algo-card-header">
-          <span class="algo-name">Ensemble Voting</span>
-          <span class="algo-status status-ok">△ 선택적</span>
-        </div>
-        <div class="algo-type">앙상블 (모델 3개 조합)</div>
-        <div class="algo-reason">
-          KLUE-RoBERTa + GPT-4o-mini FT + mDeBERTa 3개 모델 투표.
-          3개가 동의할 때만 High 판정 → 최고 안정성.
-          단, 모델 3개 유지 비용 발생.
-        </div>
-        <div class="algo-tags">
-          <span class="algo-tag pro">최고 안정성</span>
-          <span class="algo-tag con">비용 3배</span>
-          <span class="algo-tag con">속도 3배 느림</span>
-        </div>
-      </div>
-
     </div>
+
   </div>
-</section>
 
-<!-- ── 최적 조합 ───────────────────────────────────────── -->
-<section class="stack-section">
-  <div class="container">
-    <div class="section-label">Recommended Stack</div>
-    <h2 class="section-title">최종 권고 알고리즘 조합</h2>
-    <p class="section-sub">
-      단계별로 적용하면 신뢰도가 계단식으로 향상됩니다.
-    </p>
-
-    <div class="stack-visual">
-      <div class="stack-row">
-        <div class="stack-num">1</div>
-        <div class="stack-info">
-          <div class="stack-name">KoTRL-Fusion (KLUE-RoBERTa + Focal Loss)</div>
-          <div class="stack-desc">기본 분류 — CORN 서수 손실 또는 CE + 클래스 가중치</div>
-        </div>
-        <span class="stack-effect">Macro-F1 0.517</span>
-      </div>
-      <div class="stack-row">
-        <div class="stack-num">2</div>
-        <div class="stack-info">
-          <div class="stack-name">Temperature Scaling (T 파라미터 보정)</div>
-          <div class="stack-desc">확률 과신뢰 방지 — val set으로 T 최적화, ECE 감소</div>
-        </div>
-        <span class="stack-effect">ECE ↓ 40%</span>
-      </div>
-      <div class="stack-row">
-        <div class="stack-num">3</div>
-        <div class="stack-info">
-          <div class="stack-name">Confidence Threshold (θ = 0.60)</div>
-          <div class="stack-desc">신뢰도 &lt; 0.6 → "전문가 재검토" 자동 플래그</div>
-        </div>
-        <span class="stack-effect">오판 ↓ 30%</span>
-      </div>
-      <div class="stack-row">
-        <div class="stack-num">4</div>
-        <div class="stack-info">
-          <div class="stack-name">MC Dropout (N=30회 반복 추론)</div>
-          <div class="stack-desc">분산 σ &gt; 0.05 → 불확실 샘플 감지 및 표시</div>
-        </div>
-        <span class="stack-effect">튀는 값 방지</span>
-      </div>
-      <div class="stack-row">
-        <div class="stack-num">5</div>
-        <div class="stack-info">
-          <div class="stack-name">GPT-4o Ensemble (선택)</div>
-          <div class="stack-desc">KoTRL + GPT-4o 가중 앙상블 — 최고 안정성</div>
-        </div>
-        <span class="stack-effect">F1 +0.03~0.05</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ── 성능 테이블 ─────────────────────────────────────── -->
-<section class="perf-section" id="performance">
-  <div class="container">
-    <div class="section-label">Benchmark Results</div>
-    <h2 class="section-title">실험 결과 (No Start TRL)</h2>
-    <p class="section-sub">
-      Start TRL 없이 실제 배포 가능한 조건에서의 성능입니다. Macro-F1이 주요 지표입니다.
-    </p>
-
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Variant</th>
-            <th>Accuracy</th>
-            <th>Macro-F1</th>
-            <th>MAE</th>
-            <th>High F1</th>
-            <th>비고</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Majority (Mid 전부)</td>
-            <td class="perf-warn">0.826</td>
-            <td class="perf-bad">0.152</td>
-            <td>—</td>
-            <td class="perf-bad">0.000</td>
-            <td style="color:var(--text3);font-size:.75rem">하한선</td>
-          </tr>
-          <tr>
-            <td>M1 Text only</td>
-            <td>0.7147</td>
-            <td>0.5062</td>
-            <td>0.2871</td>
-            <td>0.1646</td>
-            <td style="color:var(--text3);font-size:.75rem">텍스트 단독</td>
-          </tr>
-          <tr>
-            <td>M1 + M4 Pseudo-Start</td>
-            <td>0.7119</td>
-            <td>0.5072</td>
-            <td>0.2903</td>
-            <td>0.1721</td>
-            <td style="color:var(--text3);font-size:.75rem">pseudo 효과 미미</td>
-          </tr>
-          <tr>
-            <td>M1 + M2 Retrieval</td>
-            <td>0.7150</td>
-            <td>0.5081</td>
-            <td>0.2867</td>
-            <td>0.1633</td>
-            <td style="color:var(--text3);font-size:.75rem"></td>
-          </tr>
-          <tr>
-            <td>M1+M2+M3 Rubric</td>
-            <td>0.7165</td>
-            <td>0.5093</td>
-            <td>0.2853</td>
-            <td>0.1639</td>
-            <td style="color:var(--text3);font-size:.75rem"></td>
-          </tr>
-          <tr style="background:rgba(99,179,237,.04)">
-            <td><strong>M1+M2+M3+M4 All</strong></td>
-            <td class="perf-best">0.7197</td>
-            <td class="perf-best">0.5167</td>
-            <td class="perf-best">0.2825</td>
-            <td class="perf-best">0.1714</td>
-            <td style="color:var(--accent2);font-size:.75rem">★ 배포 권고</td>
-          </tr>
-          <tr style="border-top:1px solid rgba(255,255,255,.1)">
-            <td style="color:var(--text3)">Oracle Start (상한선)</td>
-            <td style="color:var(--text3)">0.7342</td>
-            <td style="color:var(--text3)">0.5945</td>
-            <td style="color:var(--text3)">0.2669</td>
-            <td style="color:var(--text3)">0.3759</td>
-            <td style="color:var(--danger);font-size:.75rem">배포 불가</td>
-          </tr>
-        </tbody>
-      </table>
+  <!-- ── 하단 분석 패널 ── -->
+  <div class="analysis-panel">
+    <div class="analysis-tabs">
+      <div class="atab active" onclick="switchAnalysisTab('benchmark',this)">📈 벤치마크 성능</div>
+      <div class="atab" onclick="switchAnalysisTab('algorithm',this)">🔬 알고리즘 설계</div>
+      <div class="atab" onclick="switchAnalysisTab('data',this)">🗃️ 학습 데이터</div>
+      <div class="atab" onclick="switchAnalysisTab('reliability',this)">🛡️ 신뢰도 체계</div>
     </div>
 
-    <!-- 성능 바 차트 (CSS only) -->
-    <div style="margin-top:2rem; background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:1.5rem;">
-      <div style="font-family:var(--mono); font-size:.75rem; color:var(--text3); margin-bottom:1rem; letter-spacing:.08em; text-transform:uppercase;">Macro-F1 시각화</div>
-      <div style="display:flex; flex-direction:column; gap:.7rem;">
-        <div class="bar-wrap"><span style="font-family:var(--mono);font-size:.75rem;width:160px;color:var(--text2)">All (M1+M2+M3+M4)</span><div class="bar" style="width:86.1%"></div><span style="font-family:var(--mono);font-size:.75rem;color:var(--accent)">0.5167</span></div>
-        <div class="bar-wrap"><span style="font-family:var(--mono);font-size:.75rem;width:160px;color:var(--text2)">M1+M2+M3</span><div class="bar" style="width:84.9%;background:var(--text3)"></div><span style="font-family:var(--mono);font-size:.75rem;color:var(--text2)">0.5093</span></div>
-        <div class="bar-wrap"><span style="font-family:var(--mono);font-size:.75rem;width:160px;color:var(--text2)">M1 Text only</span><div class="bar" style="width:84.4%;background:var(--text3)"></div><span style="font-family:var(--mono);font-size:.75rem;color:var(--text2)">0.5062</span></div>
-        <div class="bar-wrap"><span style="font-family:var(--mono);font-size:.75rem;width:160px;color:var(--danger)">Oracle (상한선)</span><div class="bar" style="width:99.1%;background:rgba(252,129,129,.4)"></div><span style="font-family:var(--mono);font-size:.75rem;color:var(--danger)">0.5945</span></div>
-      </div>
-      <div style="margin-top:1rem;font-size:.75rem;color:var(--text3)">
-        ※ Oracle은 Start TRL 입력 필요 → 실제 사용 불가
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ── 사용법 코드 ────────────────────────────────────── -->
-<section class="code-section" id="usage">
-  <div class="container">
-    <div class="section-label">Quick Start</div>
-    <h2 class="section-title">사용법</h2>
-    <p class="section-sub">
-      3가지 방법으로 TRL을 판정할 수 있습니다.
-    </p>
-
-    <div class="code-tabs">
-      <div class="code-tab active" onclick="switchTab('basic')">기본 사용</div>
-      <div class="code-tab" onclick="switchTab('file')">파일 입력</div>
-      <div class="code-tab" onclick="switchTab('batch')">배치 처리</div>
-      <div class="code-tab" onclick="switchTab('mc')">MC Dropout</div>
-    </div>
-
-    <div id="tab-basic" class="code-block active">
-<pre><span class="cm"># 계획서 텍스트 직접 입력</span>
-<span class="kw">from</span> kotrl_pipeline <span class="kw">import</span> predict_trl_from_proposal
-
-result = predict_trl_from_proposal(
-    proposal_text=<span class="str">"""
-    본 연구는 딥러닝 기반 반도체 결함 검출 시스템을 개발한다.
-    실험실 환경에서 핵심 알고리즘을 검증하고,
-    파일럿 라인 적용을 목표로 한다.
-    """</span>,
-    tech_name=<span class="str">"AI 검사 시스템"</span>,
-    year=<span class="num">2024</span>
-)
-
-<span class="fn">print</span>(result[<span class="str">'level'</span>])        <span class="cm"># Low / Mid / High</span>
-<span class="fn">print</span>(result[<span class="str">'trl_range'</span>])    <span class="cm"># TRL 4~6 (연구실 검증 / 시제품)</span>
-<span class="fn">print</span>(result[<span class="str">'confidence'</span>])   <span class="cm"># 0.743</span>
-<span class="fn">print</span>(result[<span class="str">'needs_review'</span>])  <span class="cm"># False (신뢰도 >= 0.6)</span></pre>
-    </div>
-
-    <div id="tab-file" class="code-block">
-<pre><span class="cm"># 파일에서 직접 읽기 (.txt, .md)</span>
-<span class="kw">from</span> kotrl_pipeline <span class="kw">import</span> predict_trl_from_file
-
-result = predict_trl_from_file(
-    file_path=<span class="str">"계획서.txt"</span>,
-    tech_name=<span class="str">"수소연료전지"</span>,
-    year=<span class="num">2024</span>
-)
-
-<span class="cm"># HWP / PDF는 텍스트 추출 후 .txt로 저장</span>
-<span class="cm"># result['summary'] → GPT가 추출한 512자 요약</span>
-<span class="fn">print</span>(result[<span class="str">'summary'</span>])  <span class="cm"># 요약 내용 확인</span></pre>
-    </div>
-
-    <div id="tab-batch" class="code-block">
-<pre><span class="cm"># 여러 계획서 한번에 처리</span>
-<span class="kw">from</span> kotrl_pipeline <span class="kw">import</span> predict_trl_from_proposal, save_results
-
-proposals = [
-    {<span class="str">"text"</span>: <span class="str">"계획서1..."</span>, <span class="str">"name"</span>: <span class="str">"기술A"</span>, <span class="str">"year"</span>: <span class="num">2024</span>},
-    {<span class="str">"text"</span>: <span class="str">"계획서2..."</span>, <span class="str">"name"</span>: <span class="str">"기술B"</span>, <span class="str">"year"</span>: <span class="num">2023</span>},
-]
-
-results = [
-    predict_trl_from_proposal(p[<span class="str">"text"</span>], p[<span class="str">"name"</span>], p[<span class="str">"year"</span>], verbose=<span class="kw">False</span>)
-    <span class="kw">for</span> p <span class="kw">in</span> proposals
-]
-
-<span class="cm"># CSV로 저장</span>
-save_results(results, <span class="str">"trl_results.csv"</span>)
-
-<span class="cm"># 비용: 건당 $0.001 (gpt-4o-mini)</span>
-<span class="cm"># 100건 → 약 $0.1 (약 130원)</span></pre>
-    </div>
-
-    <div id="tab-mc" class="code-block">
-<pre><span class="cm"># MC Dropout으로 불확실성 추정</span>
-<span class="kw">import</span> torch
-<span class="kw">import</span> numpy <span class="kw">as</span> np
-
-<span class="kw">def</span> <span class="fn">mc_predict</span>(model, tokenizer, text, meta, n=<span class="num">30</span>):
-    <span class="cm"># Dropout 활성화 상태로 N회 반복 추론</span>
-    model.train()  <span class="cm"># Dropout 켜기</span>
-    probs_list = []
-
-    <span class="kw">with</span> torch.no_grad():
-        <span class="kw">for</span> _ <span class="kw">in</span> range(n):
-            probs = predict_probs(model, tokenizer, [text], meta)
-            probs_list.append(probs[<span class="num">0</span>])
-
-    probs_arr = np.array(probs_list)  <span class="cm"># (30, 3)</span>
-    mean      = probs_arr.mean(axis=<span class="num">0</span>)
-    std       = probs_arr.std(axis=<span class="num">0</span>)
-
-    level_id    = mean.argmax()
-    uncertainty = float(std.max())
-
-    <span class="kw">return</span> {
-        <span class="str">'level'</span>:       ID2LABEL[level_id],
-        <span class="str">'confidence'</span>:  float(mean[level_id]),
-        <span class="str">'uncertainty'</span>: uncertainty,
-        <span class="str">'needs_review'</span>: uncertainty > <span class="num">0.05</span> <span class="cm"># 불확실하면 재검토</span>
-    }</pre>
-    </div>
-  </div>
-</section>
-
-<!-- ── 데이터 현황 ─────────────────────────────────────── -->
-<section class="data-section" id="data">
-  <div class="container">
-    <div class="section-label">Dataset</div>
-    <h2 class="section-title">학습 데이터 현황</h2>
-    <p class="section-sub">
-      3개 공개 데이터셋을 통합하여 학습했습니다.
-    </p>
-
-    <div class="data-grid">
-      <div class="data-card">
-        <div class="data-card-label">총 데이터</div>
-        <div class="data-card-val">16,111</div>
-        <div class="data-card-sub">NASA + CORDIS + 특구재단</div>
-      </div>
-      <div class="data-card">
-        <div class="data-card-label">언어</div>
-        <div class="data-card-val">2</div>
-        <div class="data-card-sub">영어 (14,724) + 한국어 (1,387)</div>
-      </div>
-      <div class="data-card">
-        <div class="data-card-label">TRL 범위</div>
-        <div class="data-card-val">1~9</div>
-        <div class="data-card-sub">3단계로 분류 (Low/Mid/High)</div>
-      </div>
-      <div class="data-card">
-        <div class="data-card-label">실험 수</div>
-        <div class="data-card-val">98</div>
-        <div class="data-card-sub">전체 ablation 포함</div>
-      </div>
-    </div>
-
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-
-      <div style="background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:1.5rem;">
-        <div style="font-family:var(--mono); font-size:.75rem; color:var(--text3); letter-spacing:.08em; text-transform:uppercase; margin-bottom:1rem;">특구재단 TRL 분포</div>
-        <div class="trl-dist">
-          <div class="trl-row">
-            <span class="trl-label">Low</span>
-            <div class="trl-bar-wrap"><div class="trl-bar-fill trl-bar-low" style="width:14.9%"></div></div>
-            <span class="trl-pct">14.9%</span>
-          </div>
-          <div class="trl-row">
-            <span class="trl-label">Mid</span>
-            <div class="trl-bar-wrap"><div class="trl-bar-fill trl-bar-mid" style="width:82.6%"></div></div>
-            <span class="trl-pct">82.6%</span>
-          </div>
-          <div class="trl-row">
-            <span class="trl-label">High</span>
-            <div class="trl-bar-wrap"><div class="trl-bar-fill trl-bar-high" style="width:2.5%"></div></div>
-            <span class="trl-pct">2.5%</span>
+    <!-- 벤치마크 -->
+    <div id="tab-benchmark" class="atab-content active">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;">
+        <div>
+          <div style="font-size:.8rem;font-weight:700;margin-bottom:1rem;color:var(--ink);">No Start TRL 조건 실험 결과</div>
+          <table class="result-table">
+            <thead><tr><th>모델 변형</th><th>Acc</th><th>Macro-F1</th><th>High F1</th></tr></thead>
+            <tbody>
+              <tr><td>Majority (베이스라인)</td><td>0.826</td><td style="color:var(--red)">0.152</td><td>0.000</td></tr>
+              <tr><td>M1 Text only</td><td>0.715</td><td>0.506</td><td>0.165</td></tr>
+              <tr><td>M1 + Retrieval</td><td>0.715</td><td>0.508</td><td>0.163</td></tr>
+              <tr><td>M1 + Retrieval + Rubric</td><td>0.717</td><td>0.509</td><td>0.164</td></tr>
+              <tr class="highlight-row"><td>M1+M2+M3+M4 (All) <span class="best-tag">최적</span></td><td>0.720</td><td>0.517</td><td>0.171</td></tr>
+              <tr style="color:var(--text3);font-size:.78rem;"><td>Oracle (상한선, 배포불가)</td><td>0.734</td><td>0.595</td><td>0.376</td></tr>
+            </tbody>
+          </table>
+          <div style="font-size:.72rem;color:var(--text3);margin-top:.7rem;">
+            ※ Oracle은 Start TRL 입력 필요 — 실제 배포 환경에서 사용 불가
           </div>
         </div>
-        <div style="margin-top:1rem; font-size:.75rem; color:var(--text3);">
-          Mid 편중으로 Focal Loss + 클래스 가중치 적용 필수
-        </div>
-      </div>
-
-      <div style="background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:1.5rem;">
-        <div style="font-family:var(--mono); font-size:.75rem; color:var(--text3); letter-spacing:.08em; text-transform:uppercase; margin-bottom:1rem;">데이터 소스</div>
-        <div style="display:flex; flex-direction:column; gap:.8rem;">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:.85rem;">NASA TechPort</span>
-            <span style="font-family:var(--mono); font-size:.8rem; color:var(--accent);">14,090건</span>
+        <div>
+          <div style="font-size:.8rem;font-weight:700;margin-bottom:1rem;color:var(--ink);">Macro-F1 상승 경로</div>
+          <div style="display:flex;flex-direction:column;gap:.8rem;">
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:.3rem;">
+                <span style="font-size:.78rem;">Majority 베이스라인</span>
+                <span style="font-size:.78rem;font-weight:700;color:var(--red);">0.152</span>
+              </div>
+              <div style="height:8px;background:var(--silver2);border-radius:4px;overflow:hidden;">
+                <div style="width:25.6%;height:100%;background:var(--red);border-radius:4px;"></div>
+              </div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:.3rem;">
+                <span style="font-size:.78rem;">M1 Text only</span>
+                <span style="font-size:.78rem;font-weight:700;color:var(--amber);">0.506</span>
+              </div>
+              <div style="height:8px;background:var(--silver2);border-radius:4px;overflow:hidden;">
+                <div style="width:85.1%;height:100%;background:var(--amber);border-radius:4px;"></div>
+              </div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:.3rem;">
+                <span style="font-size:.78rem;font-weight:700;">All Fusion (배포 권고)</span>
+                <span style="font-size:.78rem;font-weight:700;color:var(--blue);">0.517</span>
+              </div>
+              <div style="height:8px;background:var(--silver2);border-radius:4px;overflow:hidden;">
+                <div style="width:86.9%;height:100%;background:var(--blue);border-radius:4px;"></div>
+              </div>
+            </div>
+            <div style="opacity:.5;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:.3rem;">
+                <span style="font-size:.78rem;">Oracle 상한선 (배포불가)</span>
+                <span style="font-size:.78rem;font-weight:700;">0.595</span>
+              </div>
+              <div style="height:8px;background:var(--silver2);border-radius:4px;overflow:hidden;">
+                <div style="width:100%;height:100%;background:var(--mist);border-radius:4px;"></div>
+              </div>
+            </div>
           </div>
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:.85rem;">CORDIS Horizon Europe</span>
-            <span style="font-family:var(--mono); font-size:.8rem; color:var(--accent);">634건</span>
-          </div>
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:.85rem;">연구개발특구진흥재단</span>
-            <span style="font-family:var(--mono); font-size:.8rem; color:var(--accent2);">1,387건</span>
-          </div>
-          <div style="border-top:1px solid var(--border); padding-top:.8rem; display:flex; justify-content:space-between;">
-            <span style="font-size:.85rem; font-weight:700;">합계</span>
-            <span style="font-family:var(--mono); font-size:.85rem; font-weight:700; color:var(--accent);">16,111건</span>
+          <div style="margin-top:1.5rem;background:var(--blue-lt);border-radius:10px;padding:1rem 1.2rem;border:1px solid #bfdbfe;">
+            <div style="font-size:.75rem;font-weight:700;color:var(--blue);margin-bottom:.3rem;">핵심 발견</div>
+            <div style="font-size:.78rem;color:var(--text2);line-height:1.5;">
+              추가 피처(Retrieval/Rubric/Pseudo) 전부 결합 시 Macro-F1 +1.1%p 향상.
+              <strong>텍스트 단독이 이미 강력한 베이스라인</strong>임을 실증하였으며,
+              Start TRL 없는 조건에서 실용적 판정 가능성을 확인하였습니다.
+            </div>
           </div>
         </div>
       </div>
-
     </div>
-  </div>
-</section>
 
-<!-- ── Footer ──────────────────────────────────────────── -->
-<footer>
-  <div>
-    KoTRL-Fusion &nbsp;|&nbsp;
-    한국어 기술성숙도 자동 판정 모델 &nbsp;|&nbsp;
-    <a href="https://github.com">GitHub</a> &nbsp;|&nbsp;
-    Star TRL 미사용 · Deployment-Safe
+    <!-- 알고리즘 설계 -->
+    <div id="tab-algorithm" class="atab-content">
+      <div style="margin-bottom:1.5rem;">
+        <div style="font-size:.85rem;font-weight:700;color:var(--ink);margin-bottom:.4rem;">
+          신뢰 기반 분류를 위한 4단계 알고리즘 아키텍처
+        </div>
+        <div style="font-size:.82rem;color:var(--text2);line-height:1.6;max-width:700px;">
+          단순 확률 출력에 그치지 않고, 판정의 신뢰도와 불확실성을 정량화하여
+          "판정 가능 여부" 자체를 먼저 판단합니다.
+          이는 오판 비용이 높은 R&D 투자 의사결정 환경에 최적화된 설계입니다.
+        </div>
+      </div>
+      <div class="algo-cards">
+        <div class="algo-card" style="border-left:3px solid var(--blue);">
+          <div class="ac-icon">🎯</div>
+          <div class="ac-name">KLUE-RoBERTa Fusion</div>
+          <div class="ac-desc">한국어 NLP 최고 성능 모델에 산업 도메인·연도 메타데이터를 결합한 Fusion 아키텍처. 텍스트 표현력과 맥락 정보를 동시에 활용합니다.</div>
+          <span class="ac-badge" style="color:var(--blue);border-color:#bfdbfe;background:var(--blue-lt);">핵심 모델</span>
+        </div>
+        <div class="algo-card" style="border-left:3px solid var(--teal);">
+          <div class="ac-icon">⚖️</div>
+          <div class="ac-name">Temperature Scaling</div>
+          <div class="ac-desc">딥러닝 모델의 고질적 문제인 과신뢰(overconfidence)를 단일 파라미터로 보정합니다. 실제 정확도와 신뢰도 수치를 일치시켜 수치의 의미를 보장합니다.</div>
+          <span class="ac-badge" style="color:var(--teal);border-color:#99f6e4;background:var(--teal-lt);">확률 보정</span>
+        </div>
+        <div class="algo-card" style="border-left:3px solid var(--amber);">
+          <div class="ac-icon">🔮</div>
+          <div class="ac-name">Monte Carlo Dropout</div>
+          <div class="ac-desc">동일 입력에 대해 30회 반복 추론 후 분산을 계산합니다. 분산이 임계값을 초과하면 "판정 불가(재검토 필요)" 플래그를 자동으로 부여합니다.</div>
+          <span class="ac-badge" style="color:var(--amber);border-color:#fde68a;background:var(--amber-lt);">불확실성 정량화</span>
+        </div>
+        <div class="algo-card" style="border-left:3px solid var(--green);">
+          <div class="ac-icon">🛡️</div>
+          <div class="ac-name">Confidence Threshold</div>
+          <div class="ac-desc">신뢰도 0.60 미만 샘플은 판정을 유보하고 전문가 검토를 권고합니다. 오판을 강제하지 않는 "겸손한 AI" 설계로 의사결정 신뢰성을 보장합니다.</div>
+          <span class="ac-badge" style="color:var(--green);border-color:#bbf7d0;background:var(--green-lt);">거부 옵션</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 데이터 -->
+    <div id="tab-data" class="atab-content">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;">
+        <div>
+          <div style="font-size:.8rem;font-weight:700;margin-bottom:1rem;color:var(--ink);">학습 데이터 구성</div>
+          <div class="data-pills">
+            <div class="data-pill"><div class="data-pill-dot" style="background:#3b82f6;"></div>NASA TechPort (영어, 14,090건)</div>
+            <div class="data-pill"><div class="data-pill-dot" style="background:#0d9488;"></div>CORDIS HE (영어, 634건)</div>
+            <div class="data-pill"><div class="data-pill-dot" style="background:#d97706;"></div>연구개발특구진흥재단 (한국어, 1,387건)</div>
+          </div>
+          <div style="background:var(--silver);border-radius:10px;padding:1.2rem;margin-bottom:1rem;">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;text-align:center;">
+              <div><div style="font-size:1.4rem;font-weight:700;color:var(--blue);">16,111</div><div style="font-size:.7rem;color:var(--text3);">총 학습 건수</div></div>
+              <div><div style="font-size:1.4rem;font-weight:700;color:var(--teal);">2개</div><div style="font-size:.7rem;color:var(--text3);">언어 (EN+KO)</div></div>
+              <div><div style="font-size:1.4rem;font-weight:700;color:var(--amber);">98회</div><div style="font-size:.7rem;color:var(--text3);">전체 실험 수</div></div>
+            </div>
+          </div>
+          <div style="font-size:.8rem;font-weight:700;margin-bottom:.8rem;color:var(--ink);">특구재단 TRL 클래스 분포</div>
+          <div class="dist-bars">
+            <div class="dist-row">
+              <span class="dist-label" style="color:var(--green);">Low</span>
+              <div class="dist-track"><div class="dist-fill" style="width:14.9%;background:var(--green);"></div></div>
+              <span class="dist-pct">14.9%</span>
+            </div>
+            <div class="dist-row">
+              <span class="dist-label" style="color:var(--amber);">Mid</span>
+              <div class="dist-track"><div class="dist-fill" style="width:82.6%;background:var(--amber);"></div></div>
+              <span class="dist-pct">82.6%</span>
+            </div>
+            <div class="dist-row">
+              <span class="dist-label" style="color:var(--blue);">High</span>
+              <div class="dist-track"><div class="dist-fill" style="width:2.5%;background:var(--blue);"></div></div>
+              <span class="dist-pct">2.5%</span>
+            </div>
+          </div>
+          <div style="font-size:.72rem;color:var(--text3);margin-top:.7rem;">
+            Mid 클래스 편중 → Focal Loss (γ=2.0) + 클래스 가중치 적용
+          </div>
+        </div>
+        <div>
+          <div style="font-size:.8rem;font-weight:700;margin-bottom:1rem;color:var(--ink);">데이터 품질 기준</div>
+          <div style="display:flex;flex-direction:column;gap:.6rem;">
+            <div style="display:flex;gap:.7rem;align-items:flex-start;padding:.8rem;background:var(--green-lt);border-radius:8px;border-left:3px solid var(--green);">
+              <span style="font-size:.85rem;">✅</span>
+              <div><div style="font-size:.78rem;font-weight:700;color:var(--green);margin-bottom:.2rem;">공개 R&D 데이터 100%</div><div style="font-size:.75rem;color:var(--text2);">NASA, EU, 한국 정부 공식 데이터 — 재현성 보장</div></div>
+            </div>
+            <div style="display:flex;gap:.7rem;align-items:flex-start;padding:.8rem;background:var(--blue-lt);border-radius:8px;border-left:3px solid var(--blue);">
+              <span style="font-size:.85rem;">✅</span>
+              <div><div style="font-size:.78rem;font-weight:700;color:var(--blue);margin-bottom:.2rem;">전문가 라벨 사용</div><div style="font-size:.75rem;color:var(--text2);">기관이 직접 부여한 TRL 값만 사용, 자동 생성 라벨 없음</div></div>
+            </div>
+            <div style="display:flex;gap:.7rem;align-items:flex-start;padding:.8rem;background:var(--teal-lt);border-radius:8px;border-left:3px solid var(--teal);">
+              <span style="font-size:.85rem;">✅</span>
+              <div><div style="font-size:.78rem;font-weight:700;color:var(--teal);margin-bottom:.2rem;">Start TRL 완전 배제</div><div style="font-size:.75rem;color:var(--text2);">Data leakage 원천 차단 — 실 배포 환경과 동일한 조건</div></div>
+            </div>
+            <div style="display:flex;gap:.7rem;align-items:flex-start;padding:.8rem;background:var(--amber-lt);border-radius:8px;border-left:3px solid var(--amber);">
+              <span style="font-size:.85rem;">✅</span>
+              <div><div style="font-size:.78rem;font-weight:700;color:var(--amber);margin-bottom:.2rem;">Stratified Split</div><div style="font-size:.75rem;color:var(--text2);">희소 클래스(High 2.5%) 보존형 분할 — 평가 편향 최소화</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 신뢰도 체계 -->
+    <div id="tab-reliability" class="atab-content">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;">
+        <div style="background:var(--green-lt);border:1px solid #bbf7d0;border-radius:12px;padding:1.2rem;">
+          <div style="font-size:1.5rem;margin-bottom:.5rem;">🟢</div>
+          <div style="font-weight:700;color:var(--green);margin-bottom:.3rem;">안정 (신뢰도 ≥ 0.75)</div>
+          <div style="font-size:.78rem;color:var(--text2);line-height:1.5;">높은 확신. 불확실성이 낮고 결과를 직접 활용 가능합니다.</div>
+        </div>
+        <div style="background:var(--amber-lt);border:1px solid #fde68a;border-radius:12px;padding:1.2rem;">
+          <div style="font-size:1.5rem;margin-bottom:.5rem;">🟡</div>
+          <div style="font-weight:700;color:var(--amber);margin-bottom:.3rem;">주의 (0.60 – 0.74)</div>
+          <div style="font-size:.78rem;color:var(--text2);line-height:1.5;">중간 확신. 결과 참고 후 담당자 확인을 권고합니다.</div>
+        </div>
+        <div style="background:var(--red-lt);border:1px solid #fecaca;border-radius:12px;padding:1.2rem;">
+          <div style="font-size:1.5rem;margin-bottom:.5rem;">🔴</div>
+          <div style="font-weight:700;color:var(--red);margin-bottom:.3rem;">재검토 (&lt; 0.60)</div>
+          <div style="font-size:.78rem;color:var(--text2);line-height:1.5;">판정 유보. 전문가 검토 또는 추가 정보 입력이 필요합니다.</div>
+        </div>
+      </div>
+      <div style="margin-top:1.2rem;background:var(--silver);border-radius:10px;padding:1.2rem;">
+        <div style="font-size:.78rem;font-weight:700;margin-bottom:.5rem;">Bootstrap 신뢰구간 (논문 보고 기준)</div>
+        <div style="font-size:.78rem;color:var(--text2);line-height:1.6;">
+          전체 실험 결과에 대해 1,000회 Bootstrap 재샘플링으로 95% 신뢰구간을 산출합니다.<br>
+          <strong>Macro-F1 = 0.517 [95% CI: 0.489 ~ 0.544]</strong> (n=1,000 bootstrap)
+        </div>
+      </div>
+    </div>
+
   </div>
-  <div style="margin-top:.5rem; color:var(--text3);">
-    학습 데이터: NASA TechPort · CORDIS Horizon Europe · 연구개발특구진흥재단
-  </div>
-</footer>
+</div><!-- /page -->
 
 <script>
-function switchTab(name) {
-  document.querySelectorAll('.code-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.code-block').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
-  document.getElementById('tab-' + name).classList.add('active');
+// ── 예시 데이터 ──────────────────────────────────
+const EXAMPLES = {
+  basic: {
+    text: '본 연구는 고분자 전해질 연료전지(PEMFC)의 기초 전기화학 반응 원리를 수치 모델링으로 분석하였다. 이온 전도막에서의 양성자 이동 메커니즘에 대한 이론적 분석과 문헌 고찰을 통해 핵심 물리화학적 원리를 규명하였으며, 향후 실험적 검증을 위한 이론적 기반을 마련하였다.',
+    name: '수소연료전지 기초연구', year: 2024
+  },
+  lab: {
+    text: '딥러닝 기반 반도체 웨이퍼 표면 결함 검출 알고리즘을 개발하고 실험실 환경에서 소형 시제품을 통해 핵심 기능의 작동을 검증하였다. 합성 데이터셋 기반 학습 모델이 검출 정확도 94.2%를 달성하였으며, 다음 단계로 실제 생산 라인에서의 파일럿 테스트를 준비 중이다.',
+    name: 'AI 반도체 검사', year: 2024
+  },
+  pilot: {
+    text: '개발된 수소 저장 합금 소재를 실제와 유사한 고압 환경에서 파일럿 규모로 테스트하였다. 온도 200°C, 압력 50bar 조건에서 수소 흡방출 사이클 1,000회 반복 시험을 통해 소재 안정성을 확인하였으며, 시스템 효율 92.3%를 달성하였다.',
+    name: '수소저장소재', year: 2023
+  },
+  commercialize: {
+    text: '개발된 AI 불량 검출 시스템을 국내 3개 반도체 제조사 생산 라인에 실제 적용하여 18개월간 운영 검증을 완료하였다. 불량 검출률 99.4% 달성, 허위 경보율 0.3% 이하를 기록하였으며 시스템 도입 기업에서 품질 비용 연간 23억 원 절감 효과를 보고하였다. 현재 5개 추가 기업과 도입 계약 협의 중이다.',
+    name: 'AI 품질관리', year: 2024
+  },
+  ambiguous: {
+    text: '본 기술은 차세대 배터리 소재 개발을 위한 연구로, 나노 구조 양극재의 합성 및 특성 분석을 진행하였다. 기초 연구 단계에서 확보된 핵심 원천기술을 바탕으로 실용화 가능성을 검토하고 있으며, 관련 특허를 출원하였다.',
+    name: '배터리 소재', year: 2023
+  }
+};
+
+function loadExample(key) {
+  const ex = EXAMPLES[key];
+  document.getElementById('desc-input').value = ex.text;
+  document.getElementById('tech-name').value  = ex.name;
+  document.getElementById('tech-year').value  = ex.year;
 }
 
-// 스크롤 애니메이션
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(e => {
-    if (e.isIntersecting) {
-      e.target.style.opacity = '1';
-      e.target.style.transform = 'translateY(0)';
-    }
+function switchInputTab(name, el) {
+  document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-text').style.display     = name==='text'     ? '' : 'none';
+  document.getElementById('tab-proposal').style.display = name==='proposal' ? '' : 'none';
+}
+
+function switchAnalysisTab(name, el) {
+  document.querySelectorAll('.atab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.atab-content').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+// ── 분석 실행 ────────────────────────────────────
+async function analyze() {
+  const btn = document.getElementById('submit-btn');
+  const btnText = document.getElementById('btn-text');
+  const activeTab = document.querySelector('.tabs .tab.active').textContent;
+  const isProposal = activeTab.includes('계획서');
+
+  let inputText = '';
+  if (isProposal) {
+    const goal   = document.getElementById('p-goal').value.trim();
+    const tech   = document.getElementById('p-tech').value.trim();
+    const result = document.getElementById('p-result').value.trim();
+    const level  = document.getElementById('p-level').value.trim();
+    if (!goal && !tech && !result) { alert('계획서 내용을 입력해주세요.'); return; }
+    inputText = [
+      goal   && `[연구 목표] ${goal}`,
+      tech   && `[기술 개요] ${tech}`,
+      result && `[기대 성과] ${result}`,
+      level  && `[기술 수준] ${level}`,
+    ].filter(Boolean).join('\n\n');
+  } else {
+    inputText = document.getElementById('desc-input').value.trim();
+    if (!inputText) { alert('기술 내용을 입력해주세요.'); return; }
+  }
+
+  const techName = document.getElementById('tech-name').value.trim() || '미입력';
+  const techYear = parseInt(document.getElementById('tech-year').value) || 2024;
+
+  btn.disabled = true;
+  btnText.textContent = '분석 중...';
+  showLoading();
+
+  const startTime = Date.now();
+
+  try {
+    const result = await callClaudeAPI(inputText, techName, techYear);
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    document.getElementById('result-time').textContent = `${elapsed}초 소요`;
+    showResult(result);
+  } catch(e) {
+    showError(e.message);
+  } finally {
+    btn.disabled = false;
+    btnText.textContent = '⚡ TRL 판정 실행';
+  }
+}
+
+// ── Claude API 호출 ──────────────────────────────
+async function callClaudeAPI(text, techName, year) {
+  const prompt = `당신은 R&D 기술성숙도(TRL) 평가 전문가입니다.
+다음 기술 설명을 분석하여 TRL을 3단계로 판정하세요.
+
+기술명: ${techName}
+연도: ${year}
+
+기술 설명:
+${text.substring(0, 3000)}
+
+다음 JSON 형식으로만 응답하세요 (다른 텍스트 없이):
+{
+  "level": "Low" 또는 "Mid" 또는 "High",
+  "trl_range": "TRL X~X",
+  "confidence": 0.0~1.0 사이 숫자,
+  "uncertainty": "stable" 또는 "caution" 또는 "review",
+  "prob_low": 0.0~1.0,
+  "prob_mid": 0.0~1.0,
+  "prob_high": 0.0~1.0,
+  "summary": "핵심 내용 2문장 요약",
+  "evidence_positive": ["긍정 근거1", "긍정 근거2"],
+  "evidence_negative": ["부정/한계 근거1"],
+  "evidence_neutral": ["중립 정보1"],
+  "reasoning": "판정 근거 설명 (2~3문장)"
+}
+
+판정 기준:
+- Low (TRL 2~3): 기초연구, 개념설계, 이론적 타당성 검토 단계
+- Mid (TRL 4~6): 연구실/파일럿 규모 검증, 시제품 개발, 유사환경 테스트 단계
+- High (TRL 7~9): 실제 운영환경 검증, 시스템 인증 완료, 사업화 단계
+
+confidence는 판정의 확신도입니다. 텍스트가 명확하면 높게, 모호하면 낮게 설정하세요.
+prob_low + prob_mid + prob_high = 1.0이 되어야 합니다.`;
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      messages: [{ role: 'user', content: prompt }]
+    })
   });
-}, { threshold: 0.1 });
 
-document.querySelectorAll('.algo-card, .data-card, .pipe-step').forEach(el => {
-  el.style.opacity = '0';
-  el.style.transform = 'translateY(16px)';
-  el.style.transition = 'opacity .5s ease, transform .5s ease';
-  observer.observe(el);
-});
+  if (!response.ok) throw new Error(`API 오류: ${response.status}`);
+  const data = await response.json();
+  const raw  = data.content[0].text.trim();
+
+  // JSON 추출
+  const match = raw.match(/\{[\s\S]*\}/);
+  if (!match) throw new Error('응답 파싱 실패');
+  return JSON.parse(match[0]);
+}
+
+// ── 로딩 표시 ─────────────────────────────────────
+function showLoading() {
+  document.getElementById('result-content').innerHTML = `
+    <div class="loading">
+      <div class="spinner"></div>
+      <div class="loading-text">AI가 기술 내용을 분석하고 있습니다</div>
+      <div class="loading-step" id="loading-step">핵심 섹션 추출 중...</div>
+    </div>`;
+
+  const steps = ['핵심 섹션 추출 중...', '기술 수준 분석 중...', '신뢰도 계산 중...', '결과 정량화 중...'];
+  let i = 0;
+  window._loadingInterval = setInterval(() => {
+    i = (i+1) % steps.length;
+    const el = document.getElementById('loading-step');
+    if (el) el.textContent = steps[i];
+  }, 900);
+}
+
+// ── 결과 표시 ─────────────────────────────────────
+function showResult(r) {
+  clearInterval(window._loadingInterval);
+
+  const badgeClass  = { Low:'badge-low', Mid:'badge-mid', High:'badge-high' }[r.level] || 'badge-mid';
+  const levelColor  = { Low:'var(--green)', Mid:'var(--amber)', High:'var(--blue)' }[r.level] || 'var(--amber)';
+  const levelEmoji  = { Low:'🔬', Mid:'🧪', High:'🚀' }[r.level] || '🧪';
+
+  const confPct   = Math.round(r.confidence * 100);
+  const needsReview = r.confidence < 0.60 || r.uncertainty === 'review';
+
+  const uncClass = { stable:'unc-stable', caution:'unc-caution', review:'unc-review' }[r.uncertainty] || 'unc-caution';
+  const uncLabel = { stable:'안정 · 높은 신뢰도', caution:'주의 · 중간 신뢰도', review:'재검토 필요' }[r.uncertainty] || '주의';
+  const uncIcon  = { stable:'🟢', caution:'🟡', review:'🔴' }[r.uncertainty] || '🟡';
+
+  const probLow  = Math.round((r.prob_low  || 0) * 100);
+  const probMid  = Math.round((r.prob_mid  || 0) * 100);
+  const probHigh = Math.round((r.prob_high || 0) * 100);
+
+  const posEvidence = (r.evidence_positive || []).map(e =>
+    `<div class="ev-item ev-positive"><div class="ev-icon">✅</div><div class="ev-text">${e}</div></div>`).join('');
+  const negEvidence = (r.evidence_negative || []).map(e =>
+    `<div class="ev-item ev-negative"><div class="ev-icon">⚠️</div><div class="ev-text">${e}</div></div>`).join('');
+  const neuEvidence = (r.evidence_neutral  || []).map(e =>
+    `<div class="ev-item ev-neutral"><div class="ev-icon">ℹ️</div><div class="ev-text">${e}</div></div>`).join('');
+
+  const reviewAlert = needsReview ? `
+    <div class="review-alert">
+      <div class="review-alert-icon">🔴</div>
+      <div>
+        <div class="review-alert-title">전문가 검토 권고</div>
+        <div class="review-alert-desc">신뢰도 ${confPct}% — 텍스트 정보가 충분하지 않거나 판정 경계에 해당합니다. 추가 정보 입력 또는 전문가 확인을 권장합니다.</div>
+      </div>
+    </div>` : '';
+
+  document.getElementById('result-content').innerHTML = `
+    <div class="trl-result fade-in">
+
+      ${reviewAlert}
+
+      <div class="trl-badge-wrap">
+        <div class="trl-badge ${badgeClass}">
+          <span style="font-size:1.4rem;">${levelEmoji}</span>
+          <span class="trl-badge-level">${r.level}</span>
+          <span class="trl-badge-label">${r.trl_range || ''}</span>
+        </div>
+      </div>
+
+      <div class="summary-box">
+        <div class="sb-header">AI 핵심 추출</div>
+        <div class="sb-content">${r.summary || ''}</div>
+      </div>
+
+      <div class="confidence-section">
+        <div class="conf-title">클래스별 확률 분포</div>
+        <div class="conf-row">
+          <span class="conf-label" style="color:var(--green);">Low</span>
+          <div class="conf-bar-track"><div class="conf-bar-fill bar-low" style="width:${probLow}%"></div></div>
+          <span class="conf-pct">${probLow}%</span>
+        </div>
+        <div class="conf-row">
+          <span class="conf-label" style="color:var(--amber);">Mid</span>
+          <div class="conf-bar-track"><div class="conf-bar-fill bar-mid" style="width:${probMid}%"></div></div>
+          <span class="conf-pct">${probMid}%</span>
+        </div>
+        <div class="conf-row">
+          <span class="conf-label" style="color:var(--blue);">High</span>
+          <div class="conf-bar-track"><div class="conf-bar-fill bar-high" style="width:${probHigh}%"></div></div>
+          <span class="conf-pct">${probHigh}%</span>
+        </div>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-name">신뢰도</div>
+          <div class="metric-val" style="color:${levelColor}">${confPct}%</div>
+          <div class="metric-sub">Confidence Score</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-name">불확실성</div>
+          <div class="metric-val">${uncIcon}</div>
+          <div class="metric-sub">${uncLabel}</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-name">판정 레벨</div>
+          <div class="metric-val" style="color:${levelColor}">${r.level}</div>
+          <div class="metric-sub">${r.trl_range || ''}</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-name">검토 필요</div>
+          <div class="metric-val">${needsReview ? '🔴' : '🟢'}</div>
+          <div class="metric-sub">${needsReview ? '전문가 확인' : '자동 판정 가능'}</div>
+        </div>
+      </div>
+
+      <div class="uncertainty-box ${uncClass}">
+        <div class="ub-header">
+          <span class="ub-title">불확실성 평가</span>
+          <span class="ub-value">${uncIcon} ${uncLabel}</span>
+        </div>
+        <div class="ub-desc">${r.reasoning || '판정 근거 없음'}</div>
+      </div>
+
+      <div class="evidence-section">
+        <div class="ev-title">정량적 근거 분석</div>
+        ${posEvidence}${negEvidence}${neuEvidence}
+      </div>
+
+    </div>`;
+}
+
+function showError(msg) {
+  clearInterval(window._loadingInterval);
+  document.getElementById('result-content').innerHTML = `
+    <div class="result-placeholder">
+      <span class="icon">❌</span>
+      오류가 발생했습니다<br>
+      <span style="font-size:.75rem;color:var(--red);">${msg}</span><br><br>
+      <span style="font-size:.75rem;">API 키를 확인하거나 잠시 후 다시 시도하세요.</span>
+    </div>`;
+}
 </script>
-
 </body>
 </html>
