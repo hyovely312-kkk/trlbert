@@ -1,968 +1,364 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KoTRL · 기술성숙도 실시간 판정</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Pretendard:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<style>
-:root {
-  --ink:      #0e1117;
-  --ink2:     #1c2230;
-  --silver:   #f4f6fa;
-  --silver2:  #e8ecf4;
-  --mist:     #c5cfe0;
-  --blue:     #1a56db;
-  --blue2:    #3b82f6;
-  --blue-lt:  #eff6ff;
-  --teal:     #0d9488;
-  --teal-lt:  #f0fdfa;
-  --amber:    #d97706;
-  --amber-lt: #fffbeb;
-  --red:      #dc2626;
-  --red-lt:   #fef2f2;
-  --green:    #16a34a;
-  --green-lt: #f0fdf4;
-  --text:     #1e293b;
-  --text2:    #475569;
-  --text3:    #94a3b8;
-  --border:   #e2e8f0;
-  --serif:    'DM Serif Display', serif;
-  --sans:     'Pretendard', -apple-system, sans-serif;
-}
-* { margin:0; padding:0; box-sizing:border-box; }
-html { scroll-behavior:smooth; }
-body { background:#f8fafc; color:var(--text); font-family:var(--sans); -webkit-font-smoothing:antialiased; }
-
-/* ── 헤더 ── */
-header {
-  background:#fff; border-bottom:1px solid var(--border);
-  height:56px; display:flex; align-items:center; justify-content:space-between;
-  padding:0 2rem; position:sticky; top:0; z-index:100;
-}
-.logo { font-family:var(--serif); font-size:1.1rem; color:var(--ink); }
-.logo span { color:var(--blue); }
-.header-badge {
-  font-size:.72rem; font-weight:600; letter-spacing:.06em;
-  background:var(--blue-lt); color:var(--blue);
-  border:1px solid #bfdbfe; padding:.25rem .75rem; border-radius:999px;
-}
-
-/* ── 레이아웃 ── */
-.page { max-width:1100px; margin:0 auto; padding:2rem; }
-
-/* ── 상단 소개 ── */
-.intro {
-  background:#fff; border:1px solid var(--border); border-radius:16px;
-  padding:2rem 2.5rem; margin-bottom:1.5rem;
-  display:grid; grid-template-columns:1fr auto; gap:2rem; align-items:center;
-}
-.intro-title { font-family:var(--sans); font-size:1.6rem; font-weight:700; margin-bottom:.4rem; color:var(--ink); letter-spacing:-.03em; }
-.intro-title em { font-style:normal; font-weight:800; color:var(--blue); }
-.intro-desc { font-size:.9rem; color:var(--text2); line-height:1.6; }
-.intro-stats { display:flex; gap:1.5rem; }
-.stat { text-align:center; }
-.stat-val { font-family:var(--serif); font-size:1.8rem; color:var(--blue); line-height:1; }
-.stat-label { font-size:.72rem; color:var(--text3); margin-top:.2rem; }
-
-/* ── 메인 그리드 ── */
-.main-grid {
-  display:grid; grid-template-columns:1fr 420px; gap:1.5rem;
-  align-items:start;
-}
-
-/* ── 입력 패널 ── */
-.panel {
-  background:#fff; border:1px solid var(--border);
-  border-radius:16px; overflow:hidden;
-}
-.panel-header {
-  padding:1.2rem 1.5rem; border-bottom:1px solid var(--border);
-  display:flex; align-items:center; justify-content:space-between;
-}
-.panel-title { font-size:.85rem; font-weight:700; color:var(--ink); }
-.panel-body { padding:1.5rem; }
-
-/* ── 탭 ── */
-.tabs { display:flex; gap:.4rem; margin-bottom:1.2rem; }
-.tab {
-  font-size:.78rem; font-weight:600; padding:.4rem 1rem;
-  border-radius:6px; cursor:pointer; border:1px solid var(--border);
-  background:#fff; color:var(--text2); transition:all .15s;
-}
-.tab.active { background:var(--ink); color:#fff; border-color:var(--ink); }
-
-/* ── 텍스트 입력 ── */
-.input-group { margin-bottom:1rem; }
-.input-label {
-  display:block; font-size:.75rem; font-weight:600;
-  color:var(--text2); margin-bottom:.4rem; letter-spacing:.03em;
-}
-textarea, input, select {
-  width:100%; font-family:var(--sans); font-size:.88rem;
-  border:1px solid var(--border); border-radius:8px;
-  padding:.75rem 1rem; color:var(--text); background:#fff;
-  outline:none; transition:border-color .15s;
-  resize:none;
-}
-textarea:focus, input:focus, select:focus { border-color:var(--blue); }
-textarea { min-height:160px; line-height:1.6; }
-
-.input-row { display:grid; grid-template-columns:1fr 1fr; gap:.8rem; }
-
-/* ── 예시 버튼 ── */
-.examples { display:flex; flex-wrap:wrap; gap:.4rem; margin-bottom:1.2rem; }
-.example-btn {
-  font-size:.73rem; padding:.3rem .75rem;
-  border-radius:999px; cursor:pointer;
-  border:1px solid var(--border); background:#fff;
-  color:var(--text2); transition:all .15s;
-}
-.example-btn:hover { border-color:var(--blue); color:var(--blue); background:var(--blue-lt); }
-
-/* ── 제출 버튼 ── */
-.submit-btn {
-  width:100%; padding:.9rem; border-radius:10px; border:none; cursor:pointer;
-  background:var(--ink); color:#fff;
-  font-family:var(--sans); font-size:.9rem; font-weight:700;
-  display:flex; align-items:center; justify-content:center; gap:.5rem;
-  transition:background .2s;
-}
-.submit-btn:hover { background:var(--blue); }
-.submit-btn:disabled { background:var(--mist); cursor:not-allowed; }
-
-/* ── 결과 패널 ── */
-.result-placeholder {
-  padding:3rem 1.5rem; text-align:center;
-  color:var(--text3); font-size:.85rem; line-height:1.6;
-}
-.result-placeholder .icon { font-size:2.5rem; margin-bottom:.8rem; display:block; }
-
-/* ── TRL 판정 결과 ── */
-.trl-result { padding:1.5rem; }
-
-.trl-badge-wrap { text-align:center; padding:1.5rem 0 1rem; }
-.trl-badge {
-  display:inline-flex; flex-direction:column; align-items:center;
-  width:130px; height:130px; border-radius:50%;
-  justify-content:center; border:3px solid;
-  transition:all .4s ease;
-}
-.trl-badge-level { font-family:var(--serif); font-size:2rem; line-height:1; }
-.trl-badge-label { font-size:.7rem; font-weight:700; letter-spacing:.1em; margin-top:.2rem; }
-.trl-badge-range { font-size:.68rem; margin-top:.1rem; opacity:.7; }
-
-.badge-low  { border-color:#16a34a; color:#16a34a; background:#f0fdf4; }
-.badge-mid  { border-color:#d97706; color:#d97706; background:#fffbeb; }
-.badge-high { border-color:#1a56db; color:#1a56db; background:#eff6ff; }
-.badge-review { border-color:#dc2626; color:#dc2626; background:#fef2f2; }
-
-/* ── 신뢰도 바 ── */
-.confidence-section { margin-bottom:1.5rem; }
-.conf-title { font-size:.75rem; font-weight:600; color:var(--text2); margin-bottom:.8rem; }
-.conf-row { display:flex; align-items:center; gap:.8rem; margin-bottom:.5rem; }
-.conf-label { font-size:.78rem; width:40px; font-weight:600; }
-.conf-bar-track {
-  flex:1; height:8px; background:var(--silver2);
-  border-radius:4px; overflow:hidden;
-}
-.conf-bar-fill { height:100%; border-radius:4px; transition:width .8s cubic-bezier(.4,0,.2,1); }
-.bar-low   { background:#16a34a; }
-.bar-mid   { background:#d97706; }
-.bar-high  { background:#1a56db; }
-.conf-pct  { font-size:.78rem; font-weight:700; width:40px; text-align:right; }
-
-/* ── 불확실성 게이지 ── */
-.uncertainty-box {
-  border-radius:10px; padding:1rem 1.2rem; margin-bottom:1.2rem;
-  border:1px solid;
-}
-.ub-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:.4rem; }
-.ub-title { font-size:.78rem; font-weight:700; }
-.ub-value { font-family:var(--serif); font-size:1.1rem; }
-.ub-desc { font-size:.75rem; line-height:1.5; }
-
-.unc-stable  { border-color:#bbf7d0; background:#f0fdf4; color:#166534; }
-.unc-caution { border-color:#fde68a; background:#fffbeb; color:#92400e; }
-.unc-review  { border-color:#fecaca; background:#fef2f2; color:#991b1b; }
-
-/* ── 정량 지표 ── */
-.metrics-grid { display:grid; grid-template-columns:1fr 1fr; gap:.6rem; margin-bottom:1.2rem; }
-.metric-card {
-  background:var(--silver); border-radius:8px; padding:.8rem 1rem;
-}
-.metric-name { font-size:.68rem; color:var(--text3); font-weight:600; letter-spacing:.05em; text-transform:uppercase; margin-bottom:.2rem; }
-.metric-val  { font-family:var(--serif); font-size:1.2rem; color:var(--ink); }
-.metric-sub  { font-size:.68rem; color:var(--text3); }
-
-/* ── 근거 분석 ── */
-.evidence-section { margin-bottom:1.2rem; }
-.ev-title { font-size:.75rem; font-weight:700; color:var(--text2); margin-bottom:.7rem; }
-.ev-item {
-  display:flex; gap:.7rem; align-items:flex-start;
-  padding:.6rem .8rem; border-radius:8px; margin-bottom:.4rem;
-  background:var(--silver); border-left:3px solid;
-}
-.ev-icon { font-size:.85rem; flex-shrink:0; margin-top:.1rem; }
-.ev-text { font-size:.78rem; color:var(--text); line-height:1.5; }
-.ev-strong { color:var(--blue); font-weight:600; }
-
-.ev-positive { border-color:#86efac; }
-.ev-negative { border-color:#fca5a5; }
-.ev-neutral  { border-color:#94a3b8; }
-
-/* ── 요약 추출 표시 ── */
-.summary-box {
-  background:var(--silver); border-radius:10px; padding:1rem 1.2rem;
-  margin-bottom:1.2rem; border:1px solid var(--border);
-}
-.sb-header { font-size:.72rem; font-weight:700; color:var(--text3); letter-spacing:.06em; text-transform:uppercase; margin-bottom:.5rem; }
-.sb-content { font-size:.82rem; color:var(--text2); line-height:1.6; }
-
-/* ── 재검토 경고 ── */
-.review-alert {
-  background:#fef2f2; border:1px solid #fecaca;
-  border-radius:10px; padding:1rem 1.2rem; margin-bottom:1.2rem;
-  display:flex; gap:.7rem;
-}
-.review-alert-icon { font-size:1rem; flex-shrink:0; }
-.review-alert-title { font-size:.8rem; font-weight:700; color:#991b1b; margin-bottom:.2rem; }
-.review-alert-desc  { font-size:.75rem; color:#b91c1c; line-height:1.5; }
-
-/* ── 로딩 ── */
-.loading { padding:3rem 1.5rem; text-align:center; }
-.spinner {
-  width:36px; height:36px; border-radius:50%;
-  border:3px solid var(--silver2); border-top-color:var(--blue);
-  animation:spin .8s linear infinite; margin:0 auto 1rem;
-}
-@keyframes spin { to { transform:rotate(360deg); } }
-.loading-text { font-size:.82rem; color:var(--text3); }
-.loading-step {
-  font-size:.78rem; color:var(--text3); margin-top:.3rem;
-  animation:pulse 1.5s ease infinite;
-}
-@keyframes pulse { 0%,100%{opacity:.4} 50%{opacity:1} }
-
-/* ── 하단 분석 패널 ── */
-.analysis-panel {
-  background:#fff; border:1px solid var(--border); border-radius:16px;
-  margin-top:1.5rem; overflow:hidden;
-}
-.analysis-tabs {
-  display:flex; border-bottom:1px solid var(--border);
-  padding:0 1.5rem; overflow-x:auto;
-}
-.atab {
-  font-size:.8rem; font-weight:600; padding:1rem .8rem;
-  cursor:pointer; color:var(--text3); border-bottom:2px solid transparent;
-  white-space:nowrap; transition:all .15s;
-}
-.atab.active { color:var(--blue); border-bottom-color:var(--blue); }
-.atab-content { display:none; padding:1.5rem; }
-.atab-content.active { display:block; }
-
-/* ── 실험 결과 테이블 ── */
-.result-table { width:100%; border-collapse:collapse; font-size:.82rem; }
-.result-table th {
-  text-align:left; padding:.7rem 1rem;
-  font-size:.7rem; letter-spacing:.06em; text-transform:uppercase;
-  color:var(--text3); font-weight:600;
-  border-bottom:2px solid var(--border);
-}
-.result-table td {
-  padding:.75rem 1rem; border-bottom:1px solid var(--silver2);
-}
-.result-table tr:last-child td { border-bottom:none; }
-.result-table tr:hover td { background:var(--silver); }
-
-.highlight-row td { background:var(--blue-lt) !important; font-weight:600; }
-.best-tag {
-  font-size:.65rem; background:var(--blue); color:#fff;
-  padding:.15rem .5rem; border-radius:999px; margin-left:.4rem;
-}
-
-/* ── 알고리즘 카드 (마케팅용) ── */
-.algo-cards { display:grid; grid-template-columns:repeat(2,1fr); gap:1rem; }
-.algo-card {
-  border-radius:12px; padding:1.2rem; border:1px solid var(--border);
-  transition:box-shadow .2s;
-}
-.algo-card:hover { box-shadow:0 4px 20px rgba(0,0,0,.08); }
-.ac-icon { font-size:1.5rem; margin-bottom:.6rem; }
-.ac-name { font-size:.85rem; font-weight:700; margin-bottom:.3rem; }
-.ac-desc { font-size:.78rem; color:var(--text2); line-height:1.5; margin-bottom:.7rem; }
-.ac-badge {
-  font-size:.65rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
-  padding:.2rem .6rem; border-radius:999px; border:1px solid;
-}
-
-/* ── 데이터 현황 ── */
-.data-pills { display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:1.2rem; }
-.data-pill {
-  font-size:.78rem; padding:.35rem .9rem; border-radius:999px;
-  border:1px solid var(--border); background:var(--silver);
-  display:flex; align-items:center; gap:.4rem;
-}
-.data-pill-dot { width:7px; height:7px; border-radius:50%; }
-
-.dist-bars { display:flex; flex-direction:column; gap:.6rem; }
-.dist-row { display:flex; align-items:center; gap:.8rem; }
-.dist-label { font-size:.78rem; font-weight:600; width:45px; }
-.dist-track { flex:1; height:10px; background:var(--silver2); border-radius:5px; overflow:hidden; }
-.dist-fill   { height:100%; border-radius:5px; }
-.dist-pct    { font-size:.75rem; color:var(--text3); width:40px; text-align:right; }
-
-/* ── 반응형 ── */
-@media (max-width:900px) {
-  .main-grid { grid-template-columns:1fr; }
-  .intro { grid-template-columns:1fr; }
-  .intro-stats { justify-content:flex-start; }
-  .algo-cards { grid-template-columns:1fr; }
-}
-@media (max-width:600px) {
-  .input-row { grid-template-columns:1fr; }
-  .metrics-grid { grid-template-columns:1fr 1fr; }
-}
-
-/* ── 애니메이션 ── */
-@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
-.fade-in { animation:fadeIn .4s ease forwards; }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>KoTRL v4.0 · TRL 모델 API 연동형 판정 시스템</title>
+  <style>
+    :root{
+      --bg:#f6f8fb; --panel:#ffffff; --ink:#0f172a; --text:#334155; --muted:#64748b;
+      --border:#e2e8f0; --blue:#2563eb; --blue2:#1d4ed8; --bluebg:#eff6ff;
+      --green:#16a34a; --greenbg:#f0fdf4; --amber:#d97706; --amberbg:#fffbeb;
+      --red:#dc2626; --redbg:#fef2f2; --purple:#7c3aed; --shadow:0 14px 34px rgba(15,23,42,.07);
+      --radius:20px; --sans:Pretendard,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.55}
+    header{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.94);backdrop-filter:blur(14px);border-bottom:1px solid var(--border)}
+    .top{max-width:1260px;margin:0 auto;padding:14px 22px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+    .logo{font-weight:1000;color:var(--ink);font-size:18px;letter-spacing:-.045em}.logo span{color:var(--blue)}
+    .badge{display:inline-flex;align-items:center;border:1px solid #bfdbfe;background:var(--bluebg);color:#1d4ed8;border-radius:999px;padding:6px 11px;font-size:12px;font-weight:900;white-space:nowrap}
+    .wrap{max-width:1260px;margin:0 auto;padding:26px 22px 64px}
+    .hero{background:linear-gradient(135deg,#ffffff 0%,#eff6ff 100%);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;margin-bottom:18px}
+    h1{margin:0 0 8px;color:var(--ink);font-size:29px;line-height:1.22;letter-spacing:-.055em}
+    .hero p{margin:0;color:var(--muted);font-size:14px}.hero b{color:var(--ink)}
+    .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}.tab{background:#fff;border:1px solid var(--border);border-radius:15px;padding:13px 12px;text-align:left;color:var(--ink);box-shadow:var(--shadow);font-weight:950;cursor:pointer;transition:.15s}.tab small{display:block;color:var(--muted);font-weight:750;margin-top:2px}.tab.active{border-color:#93c5fd;background:var(--bluebg);color:var(--blue2)}
+    .page{display:none}.page.active{display:block}.grid{display:grid;grid-template-columns:1fr 410px;gap:18px;align-items:start}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+    .panel{background:#fff;border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}.panel-head{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.panel-title{margin:0;color:var(--ink);font-size:15px;font-weight:1000;letter-spacing:-.03em}.panel-sub{margin:2px 0 0;color:var(--muted);font-size:12px}.panel-body{padding:18px}
+    label{display:block;margin:0 0 6px;color:#1e293b;font-size:12px;font-weight:950}textarea,input,select{width:100%;border:1px solid var(--border);border-radius:12px;background:#fff;color:var(--text);padding:11px 12px;font:inherit;font-size:13.5px;outline:none;transition:.15s}textarea:focus,input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.09)}textarea{min-height:112px;resize:vertical}.field{margin-bottom:13px}
+    .btn{border:none;border-radius:13px;padding:12px 14px;font:inherit;font-weight:1000;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:.15s}.btn-primary{background:var(--ink);color:white}.btn-primary:hover{background:#020617}.btn-blue{background:var(--blue);color:white}.btn-blue:hover{background:#1d4ed8}.btn-secondary{background:#fff;color:var(--ink);border:1px solid var(--border)}.btn-secondary:hover{background:#f8fafc}.btn-red{background:var(--red);color:#fff}.actions{display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-top:12px}.actions3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px}
+    .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}.chip{border:1px solid var(--border);background:#fff;color:var(--text);border-radius:999px;padding:7px 11px;font-size:12px;font-weight:900;cursor:pointer}.chip:hover{border-color:var(--blue);color:var(--blue);background:var(--bluebg)}
+    .notice{border-radius:13px;padding:12px 13px;font-size:12px;line-height:1.55;margin-top:12px}.notice.blue{background:var(--bluebg);border:1px solid #bfdbfe;color:#1e40af}.notice.amber{background:var(--amberbg);border:1px solid #fde68a;color:#92400e}.notice.red{background:var(--redbg);border:1px solid #fecaca;color:#991b1b}.notice.green{background:var(--greenbg);border:1px solid #bbf7d0;color:#166534}
+    .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.kpi{background:#f8fafc;border:1px solid var(--border);border-radius:14px;padding:13px;text-align:center}.kpi b{display:block;color:var(--blue);font-size:21px;letter-spacing:-.03em}.kpi span{font-size:11px;color:var(--muted);font-weight:850}.empty{text-align:center;color:var(--muted);padding:42px 18px}.empty b{display:block;color:var(--ink);font-size:17px;margin-bottom:6px}
+    .label-card{border:1px solid var(--border);border-radius:16px;background:#f8fafc;padding:17px;margin-bottom:14px}.final-label{font-size:35px;line-height:1;font-weight:1000;color:var(--ink);letter-spacing:-.06em}.pill{display:inline-flex;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:950;margin-top:9px}.stable{background:var(--greenbg);border:1px solid #bbf7d0;color:var(--green)}.caution{background:var(--amberbg);border:1px solid #fde68a;color:var(--amber)}.review{background:var(--redbg);border:1px solid #fecaca;color:var(--red)}.api{background:#eef2ff;border:1px solid #c7d2fe;color:#3730a3}
+    .prob{margin:12px 0}.prob-top{display:flex;justify-content:space-between;color:#1e293b;font-size:12px;font-weight:950;margin-bottom:5px}.bar{height:9px;background:#eef2f7;border-radius:999px;overflow:hidden}.bar span{display:block;height:100%;border-radius:999px;background:var(--blue);width:0}.bar.low span{background:var(--purple)}.bar.mid span{background:var(--blue)}.bar.high span{background:var(--green)}
+    .section-title{font-size:13px;font-weight:1000;color:var(--ink);margin:18px 0 9px}.flag{border:1px solid var(--border);background:#f8fafc;border-radius:11px;padding:9px 11px;font-size:12px;font-weight:760;color:var(--text);margin-bottom:7px}.flag.red{background:var(--redbg);border-color:#fecaca;color:#991b1b}.flag.amber{background:var(--amberbg);border-color:#fde68a;color:#92400e}.flag.green{background:var(--greenbg);border-color:#bbf7d0;color:#166534}.evidence{border:1px solid var(--border);border-radius:13px;padding:11px 12px;margin:8px 0;background:#fff}.evidence .tag{display:inline-flex;border-radius:999px;font-size:11px;font-weight:950;padding:3px 8px;margin-bottom:7px;background:#f1f5f9;color:#475569}.evidence p{margin:0;font-size:13px}
+    .card{border:1px solid var(--border);border-radius:15px;background:#fff;padding:14px;margin-bottom:12px}.card h3{margin:0 0 8px;color:var(--ink);font-size:14px}.class-row{border-top:1px solid var(--border);padding:10px 0;display:grid;grid-template-columns:48px 1fr 76px;gap:10px;align-items:start}.class-rank{font-weight:1000;color:var(--blue);font-size:13px}.class-name{font-size:13px;color:var(--ink);font-weight:900}.class-code{font-size:11px;color:var(--muted);margin-top:2px}.class-score{text-align:right;font-size:12px;font-weight:1000;color:var(--ink)}
+    .mini{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:10px 0}.mini div{background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:10px;font-size:12px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border-bottom:1px solid var(--border);padding:9px;text-align:left;vertical-align:top}th{background:#f8fafc;color:var(--ink);font-weight:1000}details{border:1px solid var(--border);background:#fff;border-radius:14px;margin-top:14px;overflow:hidden}summary{cursor:pointer;padding:13px 15px;font-weight:1000;color:var(--ink)}.detail-body{padding:0 15px 15px;font-size:13px;color:var(--muted)}.jsonbox{background:#0f172a;color:#dbeafe;border-radius:13px;padding:12px;white-space:pre-wrap;font-size:11px;max-height:330px;overflow:auto}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    @media (max-width:980px){.tabs,.grid,.grid2,.row,.row3,.mini,.actions,.actions3{grid-template-columns:1fr}.top{align-items:flex-start}.kpis{grid-template-columns:1fr 1fr 1fr}.badge{white-space:normal}}
+  </style>
 </head>
 <body>
-
 <header>
-  <div class="logo">Ko<span>TRL</span></div>
-  <div style="display:flex;gap:1rem;align-items:center;">
-    <span style="font-size:.78rem;color:var(--text3);">Powered by Claude Sonnet · GPT 비용 0원</span>
-    <span class="header-badge">DEMO v1.0</span>
+  <div class="top">
+    <div class="logo">Ko<span>TRL</span> v4.0 · API-ready Classification Engine</div>
+    <div class="badge">Frontend + TRL Model API + Local Fallback + 기술분류 Consensus</div>
   </div>
 </header>
 
-<div class="page">
+<main class="wrap">
+  <section class="hero">
+    <h1>TRL 판정 + 기술분류 통합 자동화 시스템</h1>
+    <p>현재 HTML은 <b>프론트엔드 인터페이스</b>입니다. TRL 판정은 우선 <b>백엔드 모델 API</b>를 호출하고, 서버가 없으면 <b>로컬 evidence guardrail</b>로 fallback합니다. 기술분류는 분류표 기반 로컬 consensus 방식으로 작동합니다.</p>
+  </section>
 
-  <!-- ── 상단 소개 ── -->
-  <div class="intro">
-    <div>
-      <div class="intro-title">기술성숙도 <em>자동 판정</em> 시스템</div>
-      <div class="intro-desc">
-        연구개발 계획서 또는 기술 설명문을 입력하면 AI가 4개 핵심 섹션을 추출하고
-        다층 신뢰도 알고리즘으로 Low · Mid · High를 판정합니다.<br>
-        <strong>Start TRL 입력 불필요</strong> — 텍스트 단독으로 작동하는 실 배포 가능 모델입니다.
+  <nav class="tabs">
+    <button class="tab active" onclick="goPage(1)">1. 기술정보 입력<small>원문·메타데이터 정리</small></button>
+    <button class="tab" onclick="goPage(2)">2. TRL 판정<small>모델 API 우선 + 로컬 fallback</small></button>
+    <button class="tab" onclick="goPage(3)">3. 기술분류<small>분류표 기반 3-run consensus</small></button>
+    <button class="tab" onclick="goPage(4)">4. 통합결과<small>JSON/CSV/피드백 저장</small></button>
+  </nav>
+
+  <section id="page1" class="page active">
+    <div class="grid">
+      <div class="panel">
+        <div class="panel-head"><div><h2 class="panel-title">1페이지. 기술정보 입력</h2><p class="panel-sub">과제 설명문 기반 TRL 예비진단과 기술분류를 위한 입력 화면입니다.</p></div></div>
+        <div class="panel-body">
+          <div class="chips">
+            <button class="chip" onclick="loadExample('aiTraffic')">AI 교통관제 예시</button>
+            <button class="chip" onclick="loadExample('bio')">바이오/헬스케어 예시</button>
+            <button class="chip" onclick="loadExample('semi')">온디바이스 AI 반도체 예시</button>
+            <button class="chip" onclick="loadExample('energy')">에너지/환경 예시</button>
+          </div>
+          <div class="row">
+            <div class="field"><label>기술명</label><input id="techName" placeholder="예: 생성형 AI 기반 지능형 돌발상황 복합검지 기술"></div>
+            <div class="field"><label>연도 / 과제연도</label><input id="year" type="number" min="1990" max="2100" placeholder="예: 2026"></div>
+          </div>
+          <div class="field"><label>기술개요</label><textarea id="overview" placeholder="기술의 전체 개요를 입력하세요."></textarea></div>
+          <div class="field"><label>개발목표</label><textarea id="goal" placeholder="개발하고자 하는 최종 산출물, 성능목표, TRL 목표 등을 입력하세요."></textarea></div>
+          <div class="field"><label>핵심기술</label><textarea id="coreTech" placeholder="알고리즘, 모델, 센서, 플랫폼, 시스템 구성 등 핵심기술을 입력하세요."></textarea></div>
+          <div class="field"><label>적용분야</label><textarea id="application" placeholder="교통, 제조, 의료, 에너지, 공공안전 등 적용분야를 입력하세요."></textarea></div>
+          <div class="field"><label>검증/실증 내용</label><textarea id="validation" placeholder="실험실 검증, 시제품, 테스트베드, 현장실증, 인증 등을 입력하세요."></textarea></div>
+          <div class="field"><label>사업화 내용</label><textarea id="business" placeholder="고객사 PoC, 납품, 상용화, 양산, 매출, 조달, 인증 등을 입력하세요."></textarea></div>
+          <div class="row3">
+            <div class="field"><label>문서 출처</label><select id="source"><option value="">미지정</option><option>NASA TechPort</option><option>CORDIS</option><option>ETRI/NTIS/한국</option><option>기업 내부자료</option><option>기타</option></select></div>
+            <div class="field"><label>TRL 판정 모드</label><select id="strictMode"><option value="strict" selected>보수적</option><option value="balanced">균형</option><option value="exploratory">탐색</option></select></div>
+            <div class="field"><label>기술분류 모드</label><select id="classificationMode"><option value="hybrid" selected>하이브리드</option><option value="keyword">키워드 우선</option><option value="semantic">의미 유사도 우선</option></select></div>
+          </div>
+          <div class="actions">
+            <button class="btn btn-primary" onclick="saveInputAndNext()">입력 저장 후 TRL 판정으로 이동</button>
+            <button class="btn btn-secondary" onclick="resetAll()">초기화</button>
+          </div>
+        </div>
       </div>
+      <aside class="panel">
+        <div class="panel-head"><div><h2 class="panel-title">입력 품질 체크</h2><p class="panel-sub">판정 품질은 설명문의 구체성에 좌우됩니다.</p></div></div>
+        <div class="panel-body" id="inputQuality"><div class="empty"><b>입력 전</b>각 필드를 채우면 품질 체크가 표시됩니다.</div></div>
+      </aside>
     </div>
-    <div class="intro-stats">
-      <div class="stat">
-        <div class="stat-val">16K+</div>
-        <div class="stat-label">학습 데이터</div>
+  </section>
+
+  <section id="page2" class="page">
+    <div class="grid">
+      <div class="panel">
+        <div class="panel-head"><div><h2 class="panel-title">2페이지. TRL 판정</h2><p class="panel-sub">학습모델 API가 있으면 API를 먼저 호출하고, 실패하면 로컬 판정으로 대체합니다.</p></div></div>
+        <div class="panel-body">
+          <div class="row">
+            <div class="field"><label>TRL 모델 API Endpoint</label><input id="apiEndpoint" class="mono" value="http://127.0.0.1:8000/api/v1/trl/predict"></div>
+            <div class="field"><label>API 사용 여부</label><select id="apiMode"><option value="api_first" selected>API 우선 사용</option><option value="local_only">로컬 fallback만 사용</option></select></div>
+          </div>
+          <div class="row">
+            <div class="field"><label>모델명 / 버전 메모</label><input id="modelVersion" value="M1+M2+M3+M4 Pseudo-Start v1.0"></div>
+            <div class="field"><label>요청 타임아웃(ms)</label><input id="apiTimeout" type="number" value="3500"></div>
+          </div>
+          <div class="kpis"><div class="kpi"><b>API</b><span>학습모델 추론</span></div><div class="kpi"><b>Local</b><span>시연용 fallback</span></div><div class="kpi"><b>High</b><span>Guardrail 적용</span></div></div>
+          <div class="notice blue">GitHub Pages에 올리면 Python 백엔드는 같이 실행되지 않습니다. 이 HTML은 API 서버가 꺼져 있어도 로컬 fallback으로 화면 시연이 가능합니다.</div>
+          <div class="actions">
+            <button class="btn btn-blue" onclick="runTRLModelAPI()">TRL 모델/API 판정 실행</button>
+            <button class="btn btn-secondary" onclick="goPage(3)">기술분류로 이동</button>
+          </div>
+          <details><summary>입력 원문 확인</summary><div class="detail-body"><pre id="combinedPreview" class="jsonbox"></pre></div></details>
+        </div>
       </div>
-      <div class="stat">
-        <div class="stat-val">51.7%</div>
-        <div class="stat-label">Macro-F1</div>
-      </div>
-      <div class="stat">
-        <div class="stat-val">3중</div>
-        <div class="stat-label">신뢰도 검증</div>
-      </div>
+      <aside class="panel">
+        <div class="panel-head"><div><h2 class="panel-title">TRL 판정 결과</h2><p class="panel-sub">엔진 출처, confidence, evidence, flags를 구분 표시합니다.</p></div></div>
+        <div class="panel-body" id="trlResult"><div class="empty"><b>TRL 판정 전</b>1페이지 입력 후 실행하세요.</div></div>
+      </aside>
     </div>
-  </div>
+  </section>
 
-  <!-- ── 메인 그리드 ── -->
-  <div class="main-grid">
-
-    <!-- 입력 패널 -->
+  <section id="page3" class="page">
     <div class="panel">
-      <div class="panel-header">
-        <span class="panel-title">📄 기술 내용 입력</span>
-        <span style="font-size:.72rem;color:var(--text3);">한국어 · 영어 모두 가능</span>
-      </div>
+      <div class="panel-head"><div><h2 class="panel-title">3페이지. 기술분류 판정</h2><p class="panel-sub">분류표 기반 후보 매칭 + 로컬 의미 유사도 + 3회 consensus 방식입니다.</p></div></div>
       <div class="panel-body">
-
-        <div class="tabs">
-          <div class="tab active" onclick="switchInputTab('text',this)">텍스트 직접 입력</div>
-          <div class="tab" onclick="switchInputTab('proposal',this)">계획서 형식</div>
+        <div class="grid2">
+          <div class="notice blue"><b>적용 로직</b><br>① 입력 텍스트 통합 → ② 분류체계별 후보 점수화 → ③ keyword/semantic/hybrid 3-run → ④ 투표+누적점수 → ⑤ 경계 사례 플래그.</div>
+          <div class="notice amber"><b>주의</b><br>이 기술분류는 학습모델이 아니라 분류표 기반 로컬 판정입니다. 전체 엑셀 분류표가 있으면 TAXONOMIES 객체를 확장해 정확도를 높일 수 있습니다.</div>
         </div>
-
-        <!-- 탭1: 텍스트 -->
-        <div id="tab-text">
-          <div class="input-group">
-            <label class="input-label">기술 설명 또는 계획서 내용</label>
-            <textarea id="desc-input" placeholder="예) 본 연구는 딥러닝 기반 반도체 결함 검출 알고리즘을 개발하고, 실험실 환경에서 소형 시제품을 통해 핵심 기능의 작동을 검증하였다..."></textarea>
-          </div>
-          <div style="margin-bottom:.8rem;">
-            <div class="input-label">예시 불러오기</div>
-            <div class="examples">
-              <div class="example-btn" onclick="loadExample('basic')">🔬 기초연구</div>
-              <div class="example-btn" onclick="loadExample('lab')">🧪 실험실 검증</div>
-              <div class="example-btn" onclick="loadExample('pilot')">🏭 파일럿 실증</div>
-              <div class="example-btn" onclick="loadExample('commercialize')">🚀 사업화</div>
-              <div class="example-btn" onclick="loadExample('ambiguous')">❓ 애매한 사례</div>
-            </div>
-          </div>
+        <div class="actions">
+          <button class="btn btn-blue" onclick="runClassificationConsensus()">기술분류 3회 판정 실행</button>
+          <button class="btn btn-secondary" onclick="goPage(4)">통합결과로 이동</button>
         </div>
-
-        <!-- 탭2: 계획서 형식 -->
-        <div id="tab-proposal" style="display:none;">
-          <div class="input-group">
-            <label class="input-label">① 연구 목표</label>
-            <textarea id="p-goal" rows="3" placeholder="무엇을 달성하려 하는가..."></textarea>
-          </div>
-          <div class="input-group">
-            <label class="input-label">② 기술 개요</label>
-            <textarea id="p-tech" rows="3" placeholder="어떤 기술/방법론을 사용하는가..."></textarea>
-          </div>
-          <div class="input-group">
-            <label class="input-label">③ 기대 성과</label>
-            <textarea id="p-result" rows="3" placeholder="어느 수준까지 개발/검증할 것인가..."></textarea>
-          </div>
-          <div class="input-group">
-            <label class="input-label">④ 기술 수준 (현재 상태)</label>
-            <textarea id="p-level" rows="2" placeholder="현재 어느 단계인지 (실험실/파일럿/실증 등)..."></textarea>
-          </div>
-        </div>
-
-        <div class="input-row" style="margin-bottom:1.2rem;">
-          <div class="input-group" style="margin:0">
-            <label class="input-label">기술명 (선택)</label>
-            <input type="text" id="tech-name" placeholder="예) AI 반도체 검사 시스템">
-          </div>
-          <div class="input-group" style="margin:0">
-            <label class="input-label">연도 (선택)</label>
-            <input type="number" id="tech-year" value="2024" min="2000" max="2030">
-          </div>
-        </div>
-
-        <button class="submit-btn" id="submit-btn" onclick="analyze()">
-          <span id="btn-text">⚡ TRL 판정 실행</span>
-        </button>
-
+        <div id="classResult" style="margin-top:16px"><div class="empty"><b>기술분류 전</b>3회 판정 실행 후 분류체계별 후보가 표시됩니다.</div></div>
       </div>
     </div>
+  </section>
 
-    <!-- 결과 패널 -->
-    <div class="panel" id="result-panel">
-      <div class="panel-header">
-        <span class="panel-title">📊 판정 결과</span>
-        <span id="result-time" style="font-size:.72rem;color:var(--text3);"></span>
-      </div>
-      <div id="result-content">
-        <div class="result-placeholder">
-          <span class="icon">🎯</span>
-          기술 내용을 입력하고<br>
-          <strong>TRL 판정 실행</strong>을 클릭하세요.<br><br>
-          <span style="font-size:.78rem;">
-            AI가 4개 핵심 섹션을 추출하고<br>
-            신뢰도·불확실성을 정량 분석합니다.
-          </span>
+  <section id="page4" class="page">
+    <div class="grid">
+      <div class="panel">
+        <div class="panel-head"><div><h2 class="panel-title">4페이지. 통합결과</h2><p class="panel-sub">제출·검토·재학습용 결과를 저장합니다.</p></div></div>
+        <div class="panel-body">
+          <div class="row">
+            <div class="field"><label>사람 검토 TRL 보정값</label><select id="humanTRL"><option value="">미입력</option><option>Low</option><option>Mid</option><option>High</option></select></div>
+            <div class="field"><label>검토 메모</label><input id="humanNote" placeholder="예: 실제 현장실증 근거 부족으로 Mid 유지"></div>
+          </div>
+          <div class="actions3">
+            <button class="btn btn-primary" onclick="renderSummary()">통합결과 갱신</button>
+            <button class="btn btn-secondary" onclick="downloadJSON()">JSON 다운로드</button>
+            <button class="btn btn-secondary" onclick="downloadCSV()">CSV 다운로드</button>
+          </div>
+          <div class="actions">
+            <button class="btn btn-secondary" onclick="saveFeedback()">피드백 localStorage 저장</button>
+            <button class="btn btn-secondary" onclick="downloadFeedbackCSV()">피드백 CSV 다운로드</button>
+          </div>
+          <div class="notice green">피드백 데이터는 브라우저에 저장됩니다. 나중에 모델 재학습용 라벨 후보로 export할 수 있습니다.</div>
         </div>
       </div>
+      <aside class="panel">
+        <div class="panel-head"><div><h2 class="panel-title">통합결과 미리보기</h2><p class="panel-sub">최종 판정값과 분류코드 요약</p></div></div>
+        <div class="panel-body" id="summaryResult"><div class="empty"><b>통합결과 없음</b>TRL과 기술분류를 먼저 실행하세요.</div></div>
+      </aside>
     </div>
-
-  </div>
-
-  <!-- ── 하단 분석 패널 ── -->
-  <div class="analysis-panel">
-    <div class="analysis-tabs">
-      <div class="atab active" onclick="switchAnalysisTab('benchmark',this)">📈 벤치마크 성능</div>
-      <div class="atab" onclick="switchAnalysisTab('algorithm',this)">🔬 알고리즘 설계</div>
-      <div class="atab" onclick="switchAnalysisTab('data',this)">🗃️ 학습 데이터</div>
-      <div class="atab" onclick="switchAnalysisTab('reliability',this)">🛡️ 신뢰도 체계</div>
-    </div>
-
-    <!-- 벤치마크 -->
-    <div id="tab-benchmark" class="atab-content active">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;">
-        <div>
-          <div style="font-size:.8rem;font-weight:700;margin-bottom:1rem;color:var(--ink);">No Start TRL 조건 실험 결과</div>
-          <table class="result-table">
-            <thead><tr><th>모델 변형</th><th>Acc</th><th>Macro-F1</th><th>High F1</th></tr></thead>
-            <tbody>
-              <tr><td>Majority (베이스라인)</td><td>0.826</td><td style="color:var(--red)">0.152</td><td>0.000</td></tr>
-              <tr><td>M1 Text only</td><td>0.715</td><td>0.506</td><td>0.165</td></tr>
-              <tr><td>M1 + Retrieval</td><td>0.715</td><td>0.508</td><td>0.163</td></tr>
-              <tr><td>M1 + Retrieval + Rubric</td><td>0.717</td><td>0.509</td><td>0.164</td></tr>
-              <tr class="highlight-row"><td>M1+M2+M3+M4 (All) <span class="best-tag">최적</span></td><td>0.720</td><td>0.517</td><td>0.171</td></tr>
-              <tr style="color:var(--text3);font-size:.78rem;"><td>Oracle (상한선, 배포불가)</td><td>0.734</td><td>0.595</td><td>0.376</td></tr>
-            </tbody>
-          </table>
-          <div style="font-size:.72rem;color:var(--text3);margin-top:.7rem;">
-            ※ Oracle은 Start TRL 입력 필요 — 실제 배포 환경에서 사용 불가
-          </div>
-        </div>
-        <div>
-          <div style="font-size:.8rem;font-weight:700;margin-bottom:1rem;color:var(--ink);">Macro-F1 상승 경로</div>
-          <div style="display:flex;flex-direction:column;gap:.8rem;">
-            <div>
-              <div style="display:flex;justify-content:space-between;margin-bottom:.3rem;">
-                <span style="font-size:.78rem;">Majority 베이스라인</span>
-                <span style="font-size:.78rem;font-weight:700;color:var(--red);">0.152</span>
-              </div>
-              <div style="height:8px;background:var(--silver2);border-radius:4px;overflow:hidden;">
-                <div style="width:25.6%;height:100%;background:var(--red);border-radius:4px;"></div>
-              </div>
-            </div>
-            <div>
-              <div style="display:flex;justify-content:space-between;margin-bottom:.3rem;">
-                <span style="font-size:.78rem;">M1 Text only</span>
-                <span style="font-size:.78rem;font-weight:700;color:var(--amber);">0.506</span>
-              </div>
-              <div style="height:8px;background:var(--silver2);border-radius:4px;overflow:hidden;">
-                <div style="width:85.1%;height:100%;background:var(--amber);border-radius:4px;"></div>
-              </div>
-            </div>
-            <div>
-              <div style="display:flex;justify-content:space-between;margin-bottom:.3rem;">
-                <span style="font-size:.78rem;font-weight:700;">All Fusion (배포 권고)</span>
-                <span style="font-size:.78rem;font-weight:700;color:var(--blue);">0.517</span>
-              </div>
-              <div style="height:8px;background:var(--silver2);border-radius:4px;overflow:hidden;">
-                <div style="width:86.9%;height:100%;background:var(--blue);border-radius:4px;"></div>
-              </div>
-            </div>
-            <div style="opacity:.5;">
-              <div style="display:flex;justify-content:space-between;margin-bottom:.3rem;">
-                <span style="font-size:.78rem;">Oracle 상한선 (배포불가)</span>
-                <span style="font-size:.78rem;font-weight:700;">0.595</span>
-              </div>
-              <div style="height:8px;background:var(--silver2);border-radius:4px;overflow:hidden;">
-                <div style="width:100%;height:100%;background:var(--mist);border-radius:4px;"></div>
-              </div>
-            </div>
-          </div>
-          <div style="margin-top:1.5rem;background:var(--blue-lt);border-radius:10px;padding:1rem 1.2rem;border:1px solid #bfdbfe;">
-            <div style="font-size:.75rem;font-weight:700;color:var(--blue);margin-bottom:.3rem;">핵심 발견</div>
-            <div style="font-size:.78rem;color:var(--text2);line-height:1.5;">
-              추가 피처(Retrieval/Rubric/Pseudo) 전부 결합 시 Macro-F1 +1.1%p 향상.
-              <strong>텍스트 단독이 이미 강력한 베이스라인</strong>임을 실증하였으며,
-              Start TRL 없는 조건에서 실용적 판정 가능성을 확인하였습니다.
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 알고리즘 설계 -->
-    <div id="tab-algorithm" class="atab-content">
-      <div style="margin-bottom:1.5rem;">
-        <div style="font-size:.85rem;font-weight:700;color:var(--ink);margin-bottom:.4rem;">
-          신뢰 기반 분류를 위한 4단계 알고리즘 아키텍처
-        </div>
-        <div style="font-size:.82rem;color:var(--text2);line-height:1.6;max-width:700px;">
-          단순 확률 출력에 그치지 않고, 판정의 신뢰도와 불확실성을 정량화하여
-          "판정 가능 여부" 자체를 먼저 판단합니다.
-          이는 오판 비용이 높은 R&D 투자 의사결정 환경에 최적화된 설계입니다.
-        </div>
-      </div>
-      <div class="algo-cards">
-        <div class="algo-card" style="border-left:3px solid var(--blue);">
-          <div class="ac-icon">🎯</div>
-          <div class="ac-name">KLUE-RoBERTa Fusion</div>
-          <div class="ac-desc">한국어 NLP 최고 성능 모델에 산업 도메인·연도 메타데이터를 결합한 Fusion 아키텍처. 텍스트 표현력과 맥락 정보를 동시에 활용합니다.</div>
-          <span class="ac-badge" style="color:var(--blue);border-color:#bfdbfe;background:var(--blue-lt);">핵심 모델</span>
-        </div>
-        <div class="algo-card" style="border-left:3px solid var(--teal);">
-          <div class="ac-icon">⚖️</div>
-          <div class="ac-name">Temperature Scaling</div>
-          <div class="ac-desc">딥러닝 모델의 고질적 문제인 과신뢰(overconfidence)를 단일 파라미터로 보정합니다. 실제 정확도와 신뢰도 수치를 일치시켜 수치의 의미를 보장합니다.</div>
-          <span class="ac-badge" style="color:var(--teal);border-color:#99f6e4;background:var(--teal-lt);">확률 보정</span>
-        </div>
-        <div class="algo-card" style="border-left:3px solid var(--amber);">
-          <div class="ac-icon">🔮</div>
-          <div class="ac-name">Monte Carlo Dropout</div>
-          <div class="ac-desc">동일 입력에 대해 30회 반복 추론 후 분산을 계산합니다. 분산이 임계값을 초과하면 "판정 불가(재검토 필요)" 플래그를 자동으로 부여합니다.</div>
-          <span class="ac-badge" style="color:var(--amber);border-color:#fde68a;background:var(--amber-lt);">불확실성 정량화</span>
-        </div>
-        <div class="algo-card" style="border-left:3px solid var(--green);">
-          <div class="ac-icon">🛡️</div>
-          <div class="ac-name">Confidence Threshold</div>
-          <div class="ac-desc">신뢰도 0.60 미만 샘플은 판정을 유보하고 전문가 검토를 권고합니다. 오판을 강제하지 않는 "겸손한 AI" 설계로 의사결정 신뢰성을 보장합니다.</div>
-          <span class="ac-badge" style="color:var(--green);border-color:#bbf7d0;background:var(--green-lt);">거부 옵션</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- 데이터 -->
-    <div id="tab-data" class="atab-content">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;">
-        <div>
-          <div style="font-size:.8rem;font-weight:700;margin-bottom:1rem;color:var(--ink);">학습 데이터 구성</div>
-          <div class="data-pills">
-            <div class="data-pill"><div class="data-pill-dot" style="background:#3b82f6;"></div>NASA TechPort (영어, 14,090건)</div>
-            <div class="data-pill"><div class="data-pill-dot" style="background:#0d9488;"></div>CORDIS HE (영어, 634건)</div>
-            <div class="data-pill"><div class="data-pill-dot" style="background:#d97706;"></div>연구개발특구진흥재단 (한국어, 1,387건)</div>
-          </div>
-          <div style="background:var(--silver);border-radius:10px;padding:1.2rem;margin-bottom:1rem;">
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;text-align:center;">
-              <div><div style="font-size:1.4rem;font-weight:700;color:var(--blue);">16,111</div><div style="font-size:.7rem;color:var(--text3);">총 학습 건수</div></div>
-              <div><div style="font-size:1.4rem;font-weight:700;color:var(--teal);">2개</div><div style="font-size:.7rem;color:var(--text3);">언어 (EN+KO)</div></div>
-              <div><div style="font-size:1.4rem;font-weight:700;color:var(--amber);">98회</div><div style="font-size:.7rem;color:var(--text3);">전체 실험 수</div></div>
-            </div>
-          </div>
-          <div style="font-size:.8rem;font-weight:700;margin-bottom:.8rem;color:var(--ink);">특구재단 TRL 클래스 분포</div>
-          <div class="dist-bars">
-            <div class="dist-row">
-              <span class="dist-label" style="color:var(--green);">Low</span>
-              <div class="dist-track"><div class="dist-fill" style="width:14.9%;background:var(--green);"></div></div>
-              <span class="dist-pct">14.9%</span>
-            </div>
-            <div class="dist-row">
-              <span class="dist-label" style="color:var(--amber);">Mid</span>
-              <div class="dist-track"><div class="dist-fill" style="width:82.6%;background:var(--amber);"></div></div>
-              <span class="dist-pct">82.6%</span>
-            </div>
-            <div class="dist-row">
-              <span class="dist-label" style="color:var(--blue);">High</span>
-              <div class="dist-track"><div class="dist-fill" style="width:2.5%;background:var(--blue);"></div></div>
-              <span class="dist-pct">2.5%</span>
-            </div>
-          </div>
-          <div style="font-size:.72rem;color:var(--text3);margin-top:.7rem;">
-            Mid 클래스 편중 → Focal Loss (γ=2.0) + 클래스 가중치 적용
-          </div>
-        </div>
-        <div>
-          <div style="font-size:.8rem;font-weight:700;margin-bottom:1rem;color:var(--ink);">데이터 품질 기준</div>
-          <div style="display:flex;flex-direction:column;gap:.6rem;">
-            <div style="display:flex;gap:.7rem;align-items:flex-start;padding:.8rem;background:var(--green-lt);border-radius:8px;border-left:3px solid var(--green);">
-              <span style="font-size:.85rem;">✅</span>
-              <div><div style="font-size:.78rem;font-weight:700;color:var(--green);margin-bottom:.2rem;">공개 R&D 데이터 100%</div><div style="font-size:.75rem;color:var(--text2);">NASA, EU, 한국 정부 공식 데이터 — 재현성 보장</div></div>
-            </div>
-            <div style="display:flex;gap:.7rem;align-items:flex-start;padding:.8rem;background:var(--blue-lt);border-radius:8px;border-left:3px solid var(--blue);">
-              <span style="font-size:.85rem;">✅</span>
-              <div><div style="font-size:.78rem;font-weight:700;color:var(--blue);margin-bottom:.2rem;">전문가 라벨 사용</div><div style="font-size:.75rem;color:var(--text2);">기관이 직접 부여한 TRL 값만 사용, 자동 생성 라벨 없음</div></div>
-            </div>
-            <div style="display:flex;gap:.7rem;align-items:flex-start;padding:.8rem;background:var(--teal-lt);border-radius:8px;border-left:3px solid var(--teal);">
-              <span style="font-size:.85rem;">✅</span>
-              <div><div style="font-size:.78rem;font-weight:700;color:var(--teal);margin-bottom:.2rem;">Start TRL 완전 배제</div><div style="font-size:.75rem;color:var(--text2);">Data leakage 원천 차단 — 실 배포 환경과 동일한 조건</div></div>
-            </div>
-            <div style="display:flex;gap:.7rem;align-items:flex-start;padding:.8rem;background:var(--amber-lt);border-radius:8px;border-left:3px solid var(--amber);">
-              <span style="font-size:.85rem;">✅</span>
-              <div><div style="font-size:.78rem;font-weight:700;color:var(--amber);margin-bottom:.2rem;">Stratified Split</div><div style="font-size:.75rem;color:var(--text2);">희소 클래스(High 2.5%) 보존형 분할 — 평가 편향 최소화</div></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 신뢰도 체계 -->
-    <div id="tab-reliability" class="atab-content">
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;">
-        <div style="background:var(--green-lt);border:1px solid #bbf7d0;border-radius:12px;padding:1.2rem;">
-          <div style="font-size:1.5rem;margin-bottom:.5rem;">🟢</div>
-          <div style="font-weight:700;color:var(--green);margin-bottom:.3rem;">안정 (신뢰도 ≥ 0.75)</div>
-          <div style="font-size:.78rem;color:var(--text2);line-height:1.5;">높은 확신. 불확실성이 낮고 결과를 직접 활용 가능합니다.</div>
-        </div>
-        <div style="background:var(--amber-lt);border:1px solid #fde68a;border-radius:12px;padding:1.2rem;">
-          <div style="font-size:1.5rem;margin-bottom:.5rem;">🟡</div>
-          <div style="font-weight:700;color:var(--amber);margin-bottom:.3rem;">주의 (0.60 – 0.74)</div>
-          <div style="font-size:.78rem;color:var(--text2);line-height:1.5;">중간 확신. 결과 참고 후 담당자 확인을 권고합니다.</div>
-        </div>
-        <div style="background:var(--red-lt);border:1px solid #fecaca;border-radius:12px;padding:1.2rem;">
-          <div style="font-size:1.5rem;margin-bottom:.5rem;">🔴</div>
-          <div style="font-weight:700;color:var(--red);margin-bottom:.3rem;">재검토 (&lt; 0.60)</div>
-          <div style="font-size:.78rem;color:var(--text2);line-height:1.5;">판정 유보. 전문가 검토 또는 추가 정보 입력이 필요합니다.</div>
-        </div>
-      </div>
-      <div style="margin-top:1.2rem;background:var(--silver);border-radius:10px;padding:1.2rem;">
-        <div style="font-size:.78rem;font-weight:700;margin-bottom:.5rem;">Bootstrap 신뢰구간 (논문 보고 기준)</div>
-        <div style="font-size:.78rem;color:var(--text2);line-height:1.6;">
-          전체 실험 결과에 대해 1,000회 Bootstrap 재샘플링으로 95% 신뢰구간을 산출합니다.<br>
-          <strong>Macro-F1 = 0.517 [95% CI: 0.489 ~ 0.544]</strong> (n=1,000 bootstrap)
-        </div>
-      </div>
-    </div>
-
-  </div>
-</div><!-- /page -->
+  </section>
+</main>
 
 <script>
-// ── 예시 데이터 ──────────────────────────────────
+const APP_VERSION = "KoTRL-v4.0-api-ready";
+const STATE = { input:null, trl:null, classification:null };
+
+const TAXONOMIES = {
+  nst: {
+    title:"국가과학기술표준분류", multi:true, topN:3,
+    items:[
+      item("인공지능",2,"정보/통신 > 인공지능","EE01",["인공지능","AI","딥러닝","머신러닝","LLM","VLM","컴퓨터비전","영상분석","추론","분류모델","예측모델"]),
+      item("소프트웨어",2,"정보/통신 > 소프트웨어","EE02",["소프트웨어","플랫폼","API","SaaS","클라우드","알고리즘","웹서비스","시스템 개발"]),
+      item("도로교통기술",2,"건설/교통 > 도로교통기술","EI05",["도로","교통","교차로","CCTV","관제","돌발상황","차량","보행자","이륜차","교통안전","스마트교차로"]),
+      item("자율주행·모빌리티",2,"기계 > 자동차/모빌리티","EB08",["자율주행","모빌리티","UAM","차량제어","주행","ITS","V2X"]),
+      item("반도체소자/시스템",2,"전기/전자 > 반도체소자/시스템","ED04",["반도체","AI 반도체","NPU","SoC","엣지칩","가속기","온디바이스","저전력 추론"]),
+      item("바이오·의료정보",2,"보건의료 > 바이오·의료정보","LC05",["의료","헬스케어","EMR","PHR","환자","진단","임상","병원","의료데이터","디지털헬스"]),
+      item("신약개발·약물평가",2,"보건의료 > 신약개발/약물평가","LC02",["신약","ADMET","화합물","약물","독성","효능","후보물질","임상시험"]),
+      item("에너지·환경기술",2,"에너지/자원 > 에너지·환경기술","EF01",["에너지","수소","전력","재생에너지","온실가스","탄소","환경","센서","배출","모니터링"]),
+      item("제조공정/로봇",2,"기계 > 제조공정/로봇","EB03",["제조","공정","품질검사","로봇","스마트팩토리","불량검출","설비","자동화"])
+    ]
+  },
+  sixT:{title:"6T 관련기술코드",multi:false,topN:1,items:[
+    item("IT 정보기술",1,"6T > IT 정보기술","IT",["AI","인공지능","소프트웨어","데이터","플랫폼","반도체","통신","클라우드","컴퓨터비전","LLM","VLM"]),
+    item("BT 생명공학기술",1,"6T > BT 생명공학기술","BT",["바이오","신약","의료","헬스케어","유전체","단백질","세포","임상","환자"]),
+    item("ET 환경에너지기술",1,"6T > ET 환경에너지기술","ET",["환경","에너지","탄소","온실가스","재생에너지","수소","폐기물","배출"]),
+    item("NT 나노기술",1,"6T > NT 나노기술","NT",["나노","소재","박막","나노입자","나노구조"]),
+    item("ST 우주항공기술",1,"6T > ST 우주항공기술","ST",["우주","항공","위성","발사체","우주정거장","탑재체"]),
+    item("CT 문화콘텐츠기술",1,"6T > CT 문화콘텐츠기술","CT",["콘텐츠","게임","미디어","영상콘텐츠","문화"])
+  ]},
+  application:{title:"국가과학기술표준분류_적용분야",multi:true,topN:3,items:[
+    item("교통/물류",1,"적용분야 > 교통/물류","APP-TR",["교통","물류","도로","차량","관제","교차로","ITS","모빌리티","보행자"]),
+    item("공공안전/재난",1,"적용분야 > 공공안전/재난","APP-SF",["안전","재난","사고","위험","돌발상황","감시","관제","예방"]),
+    item("보건의료",1,"적용분야 > 보건의료","APP-HC",["의료","환자","병원","진단","치료","임상","헬스케어","건강"]),
+    item("제조/산업",1,"적용분야 > 제조/산업","APP-MF",["제조","공정","설비","품질","불량","스마트팩토리","산업현장"]),
+    item("에너지/환경",1,"적용분야 > 에너지/환경","APP-EN",["에너지","환경","온실가스","탄소","전력","수소","폐기물"])
+  ]},
+  strategic:{title:"국가전략기술분류",multi:false,topN:1,items:[
+    item("인공지능",1,"국가전략기술 > 인공지능","NST-01",["AI","인공지능","LLM","VLM","딥러닝","머신러닝","컴퓨터비전","영상분석","생성형 AI"]),
+    item("반도체·디스플레이",1,"국가전략기술 > 반도체·디스플레이","NST-02",["반도체","AI 반도체","NPU","SoC","가속기","온디바이스","디스플레이"]),
+    item("첨단모빌리티",1,"국가전략기술 > 첨단모빌리티","NST-03",["모빌리티","자율주행","UAM","차량","주행","V2X","교통시스템","ITS"]),
+    item("첨단바이오",1,"국가전략기술 > 첨단바이오","NST-05",["바이오","신약","유전체","의료데이터","디지털헬스","임상","환자"]),
+    item("이차전지",1,"국가전략기술 > 이차전지","NST-06",["이차전지","배터리","양극재","음극재","전해질"]),
+    item("수소",1,"국가전략기술 > 수소","NST-07",["수소","연료전지","수전해","수소저장"]),
+    item("첨단제조",1,"국가전략기술 > 첨단제조","NST-11",["제조","로봇","공정","스마트팩토리","품질검사","자동화"])
+  ]},
+  industry:{title:"산업기술분류",multi:false,topN:1,items:[
+    item("AI·SW",1,"산업기술 > AI·SW","IND-AI",["AI","소프트웨어","플랫폼","SaaS","데이터","API","모델"]),
+    item("지능형교통시스템",1,"산업기술 > 지능형교통시스템","IND-ITS",["교통","관제","도로","교차로","CCTV","ITS","돌발상황"]),
+    item("반도체",1,"산업기술 > 반도체","IND-SEMI",["반도체","NPU","칩","가속기","온디바이스"]),
+    item("디지털헬스",1,"산업기술 > 디지털헬스","IND-DH",["헬스케어","의료","진단","EMR","PHR","임상"]),
+    item("에너지·환경",1,"산업기술 > 에너지·환경","IND-ENV",["에너지","환경","탄소","온실가스","수소"]),
+    item("스마트제조",1,"산업기술 > 스마트제조","IND-SM",["제조","공정","품질","로봇","설비","스마트팩토리"])
+  ]},
+  newbiz:{title:"12대 신산업분야",multi:false,topN:1,items:[
+    item("인공지능",1,"12대 신산업 > 인공지능","NB-AI",["AI","인공지능","LLM","VLM","딥러닝","머신러닝"]),
+    item("미래차·모빌리티",1,"12대 신산업 > 미래차·모빌리티","NB-MOB",["모빌리티","자율주행","교통","차량","ITS","UAM"]),
+    item("시스템반도체",1,"12대 신산업 > 시스템반도체","NB-SEMI",["반도체","NPU","SoC","AI 반도체","가속기"]),
+    item("바이오헬스",1,"12대 신산업 > 바이오헬스","NB-BIO",["바이오","헬스케어","의료","진단","신약"]),
+    item("에너지신산업",1,"12대 신산업 > 에너지신산업","NB-ENE",["에너지","수소","전력","재생에너지","탄소"]),
+    item("스마트제조",1,"12대 신산업 > 스마트제조","NB-MFG",["제조","로봇","스마트팩토리","자동화"])
+  ]}
+};
+function item(name,level,full,code,keywords){return {name,level,full,code,keywords};}
+
 const EXAMPLES = {
-  basic: {
-    text: '본 연구는 고분자 전해질 연료전지(PEMFC)의 기초 전기화학 반응 원리를 수치 모델링으로 분석하였다. 이온 전도막에서의 양성자 이동 메커니즘에 대한 이론적 분석과 문헌 고찰을 통해 핵심 물리화학적 원리를 규명하였으며, 향후 실험적 검증을 위한 이론적 기반을 마련하였다.',
-    name: '수소연료전지 기초연구', year: 2024
-  },
-  lab: {
-    text: '딥러닝 기반 반도체 웨이퍼 표면 결함 검출 알고리즘을 개발하고 실험실 환경에서 소형 시제품을 통해 핵심 기능의 작동을 검증하였다. 합성 데이터셋 기반 학습 모델이 검출 정확도 94.2%를 달성하였으며, 다음 단계로 실제 생산 라인에서의 파일럿 테스트를 준비 중이다.',
-    name: 'AI 반도체 검사', year: 2024
-  },
-  pilot: {
-    text: '개발된 수소 저장 합금 소재를 실제와 유사한 고압 환경에서 파일럿 규모로 테스트하였다. 온도 200°C, 압력 50bar 조건에서 수소 흡방출 사이클 1,000회 반복 시험을 통해 소재 안정성을 확인하였으며, 시스템 효율 92.3%를 달성하였다.',
-    name: '수소저장소재', year: 2023
-  },
-  commercialize: {
-    text: '개발된 AI 불량 검출 시스템을 국내 3개 반도체 제조사 생산 라인에 실제 적용하여 18개월간 운영 검증을 완료하였다. 불량 검출률 99.4% 달성, 허위 경보율 0.3% 이하를 기록하였으며 시스템 도입 기업에서 품질 비용 연간 23억 원 절감 효과를 보고하였다. 현재 5개 추가 기업과 도입 계약 협의 중이다.',
-    name: 'AI 품질관리', year: 2024
-  },
-  ambiguous: {
-    text: '본 기술은 차세대 배터리 소재 개발을 위한 연구로, 나노 구조 양극재의 합성 및 특성 분석을 진행하였다. 기초 연구 단계에서 확보된 핵심 원천기술을 바탕으로 실용화 가능성을 검토하고 있으며, 관련 특허를 출원하였다.',
-    name: '배터리 소재', year: 2023
-  }
+  aiTraffic:{techName:"생성형 AI 기반 지능형 돌발상황 복합검지 기술",year:"2026",overview:"도심 교차로 CCTV 영상에서 차량 정지, 보행자 무단횡단, 이륜차 역주행, 낙하물, 사고 정체 등 복합 돌발상황을 실시간 탐지하는 AI 영상분석 시스템이다.",goal:"객체 탐지 모델, 행동 인식 모델, 상황 분류 모델을 통합하고 엣지 디바이스에서 실시간 추론이 가능하도록 경량화한다. 최종적으로 실제 교차로 테스트베드에서 관제 연동 실증을 추진한다.",coreTech:"컴퓨터비전, 객체탐지, 행동인식, VLM 기반 상황설명, 엣지 AI 최적화, 지능형 교통관제 API",application:"도로교통, 스마트교차로, 공공안전, 지자체 교통관제센터",validation:"시제품을 제작하고 실험실 영상 데이터셋으로 성능을 검증하였다. 실제 교차로 현장실증은 2차년도에 추진 예정이다.",business:"지자체 PoC와 조달 등록을 목표로 하며, 향후 관제센터 SaaS/API 형태로 확산한다.",source:"ETRI/NTIS/한국"},
+  bio:{techName:"연합학습 기반 희귀질환 진단 보조 AI 플랫폼",year:"2026",overview:"다기관 EMR 데이터를 직접 공유하지 않고 연합학습으로 희귀질환 예측모델을 학습하는 의료 AI 플랫폼이다.",goal:"병원별 데이터 프라이버시를 유지하면서 질환군별 예측 성능을 검증하고 임상 의사결정 보조 기능을 제공한다.",coreTech:"연합학습, EMR 전처리, 질환 예측모델, 의료 LLM, 설명가능 AI",application:"디지털헬스, 병원, 희귀질환 진단보조, 임상연구",validation:"후향적 데이터셋 기반 모델링과 내부 검증을 완료하였다. 실제 임상 현장 적용과 의료기기 인허가는 후속 단계에서 추진한다.",business:"병원 컨소시엄 기반 PoC 이후 B2B 의료기관 라이선스 모델을 검토한다.",source:"기업 내부자료"},
+  semi:{techName:"온디바이스 AI 모델 최적화를 위한 NPU 기반 추론 가속 기술",year:"2026",overview:"AI 반도체와 모델 경량화 소프트웨어를 결합하여 엣지 디바이스에서 대형 비전모델을 저전력으로 실행하는 기술이다.",goal:"Structured pruning, quantization, graph-aware optimization을 적용해 정확도 손실을 최소화하면서 추론 지연시간과 전력 소모를 줄인다.",coreTech:"NPU, AI 반도체, 모델 압축, 양자화, 프루닝, 컴파일러 최적화",application:"온디바이스 AI, 스마트카메라, 제조 검사, 교통관제, 보안",validation:"상용 보드에서 프로토타입을 구현하고 벤치마크 데이터셋 기준 추론속도 개선을 확인하였다.",business:"AI Box 제품화와 해외 실증을 추진하며, B2B 라이선스와 장비 공급을 병행한다.",source:"기업 내부자료"},
+  energy:{techName:"온실가스 측정기기의 AI 모니터링 및 이상탐지 서비스",year:"2026",overview:"산업 현장의 온실가스 및 유해가스 측정기에서 수집되는 센서 데이터를 분석하여 이상값과 장비 고장을 조기에 탐지하는 AI 서비스이다.",goal:"센서 시계열 데이터 기반 이상탐지 모델과 대시보드를 개발하고 현장 장비와 연동한다.",coreTech:"시계열 이상탐지, 센서 데이터 전처리, 대시보드, 알림 API, 엣지 AI",application:"환경 모니터링, 온실가스 관리, 산업안전, 에너지 관리",validation:"실험실 환경에서 센서 데이터 재현시험을 수행했고, 현장 파일럿을 준비 중이다.",business:"구독형 모니터링 서비스와 장비 유지보수 패키지를 결합한다.",source:"ETRI/NTIS/한국"}
 };
 
-function loadExample(key) {
-  const ex = EXAMPLES[key];
-  document.getElementById('desc-input').value = ex.text;
-  document.getElementById('tech-name').value  = ex.name;
-  document.getElementById('tech-year').value  = ex.year;
-}
+function goPage(n){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelector(`#page${n}`).classList.add('active');document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===n-1));refreshPreview();if(n===4)renderSummary();}
+function $(id){return document.getElementById(id)}
+function escapeHtml(s){return String(s??"").replace(/[&<>'"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[m]));}
+function pct(x){if(x==null||isNaN(x))return 0;return Math.round(Number(x)*1000)/10;}
+function getInput(){return {techName:$('techName').value.trim(),year:$('year').value.trim(),overview:$('overview').value.trim(),goal:$('goal').value.trim(),coreTech:$('coreTech').value.trim(),application:$('application').value.trim(),validation:$('validation').value.trim(),business:$('business').value.trim(),source:$('source').value.trim(),strictMode:$('strictMode').value,classificationMode:$('classificationMode').value};}
+function combinedText(input=getInput()){return [input.techName,input.overview,input.goal,input.coreTech,input.application,input.validation,input.business].filter(Boolean).join('\n');}
+function resetAll(){if(!confirm('입력과 판정 결과를 모두 초기화할까요?'))return;['techName','year','overview','goal','coreTech','application','validation','business'].forEach(id=>$(id).value='');STATE.input=null;STATE.trl=null;STATE.classification=null;renderQuality();$('trlResult').innerHTML='<div class="empty"><b>TRL 판정 전</b>1페이지 입력 후 실행하세요.</div>';$('classResult').innerHTML='<div class="empty"><b>기술분류 전</b>3회 판정 실행 후 분류체계별 후보가 표시됩니다.</div>';$('summaryResult').innerHTML='<div class="empty"><b>통합결과 없음</b>TRL과 기술분류를 먼저 실행하세요.</div>';}
+function loadExample(k){const e=EXAMPLES[k];Object.entries(e).forEach(([id,val])=>{if($(id))$(id).value=val});renderQuality();refreshPreview();}
+function saveInputAndNext(){STATE.input=getInput();renderQuality();goPage(2);}
+function renderQuality(){const input=getInput();const text=combinedText(input);const len=text.length;const fields=['techName','overview','goal','coreTech','application','validation','business'].filter(k=>input[k]).length;let score=0;if(len>80)score+=25;if(len>250)score+=25;if(fields>=5)score+=25;if(/검증|실증|시제품|테스트|인증|납품|상용화|prototype|demonstration|validation/i.test(text))score+=25;let status=score>=75?'green':score>=50?'amber':'red';$('inputQuality').innerHTML=`<div class="label-card"><div class="final-label">${score}<span style="font-size:16px">/100</span></div><span class="pill ${score>=75?'stable':score>=50?'caution':'review'}">입력 품질 ${score>=75?'양호':score>=50?'보완 권장':'부족'}</span></div><div class="mini"><div><b>총 글자수</b><br>${len.toLocaleString()}자</div><div><b>입력 필드</b><br>${fields}/7</div><div><b>검증근거</b><br>${/검증|실증|시제품|테스트|인증|납품|상용화|prototype|demonstration|validation/i.test(text)?'있음':'부족'}</div></div><div class="notice ${status}">TRL 판정에는 개발목표보다 <b>완료된 검증·시연·운용 근거</b>가 중요합니다. 목표/예정 표현만 있으면 High 판정이 제한됩니다.</div>`}
+function refreshPreview(){const el=$('combinedPreview'); if(el) el.textContent=JSON.stringify(getInput(),null,2);}
+['techName','year','overview','goal','coreTech','application','validation','business','source','strictMode','classificationMode'].forEach(id=>setTimeout(()=>$(id)?.addEventListener('input',()=>{renderQuality();refreshPreview()}),0));
 
-function switchInputTab(name, el) {
-  document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('tab-text').style.display     = name==='text'     ? '' : 'none';
-  document.getElementById('tab-proposal').style.display = name==='proposal' ? '' : 'none';
-}
-
-function switchAnalysisTab(name, el) {
-  document.querySelectorAll('.atab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.atab-content').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('tab-'+name).classList.add('active');
-}
-
-// ── 분석 실행 ────────────────────────────────────
-async function analyze() {
-  const btn = document.getElementById('submit-btn');
-  const btnText = document.getElementById('btn-text');
-  const activeTab = document.querySelector('.tabs .tab.active').textContent;
-  const isProposal = activeTab.includes('계획서');
-
-  let inputText = '';
-  if (isProposal) {
-    const goal   = document.getElementById('p-goal').value.trim();
-    const tech   = document.getElementById('p-tech').value.trim();
-    const result = document.getElementById('p-result').value.trim();
-    const level  = document.getElementById('p-level').value.trim();
-    if (!goal && !tech && !result) { alert('계획서 내용을 입력해주세요.'); return; }
-    inputText = [
-      goal   && `[연구 목표] ${goal}`,
-      tech   && `[기술 개요] ${tech}`,
-      result && `[기대 성과] ${result}`,
-      level  && `[기술 수준] ${level}`,
-    ].filter(Boolean).join('\n\n');
-  } else {
-    inputText = document.getElementById('desc-input').value.trim();
-    if (!inputText) { alert('기술 내용을 입력해주세요.'); return; }
+async function runTRLModelAPI(){
+  const input=getInput(); const text=combinedText(input);
+  if(text.length<80){alert('기술정보가 너무 짧습니다. 최소 80자 이상 입력하세요.');return;}
+  STATE.input=input; refreshPreview();
+  const apiMode=$('apiMode').value; const endpoint=$('apiEndpoint').value.trim();
+  if(apiMode==='local_only' || !endpoint){STATE.trl=localTRLConsensus(input,{fallbackUsed:true,apiTried:false,error:null});renderTRLResult();return;}
+  const payload={tech_name:input.techName,overview:input.overview,goal:input.goal,core_tech:input.coreTech,application:input.application,validation:input.validation,business:input.business,source:input.source,strict_mode:input.strictMode,frontend_version:APP_VERSION};
+  try{
+    const timeout=Number($('apiTimeout').value||3500);
+    const controller=new AbortController(); const timer=setTimeout(()=>controller.abort(),timeout);
+    const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:controller.signal});
+    clearTimeout(timer);
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const data=await res.json();
+    STATE.trl=normalizeApiTRL(data,input,endpoint);
+  }catch(err){
+    console.warn('[KoTRL] API failed. Local fallback used:',err);
+    STATE.trl=localTRLConsensus(input,{fallbackUsed:true,apiTried:true,error:String(err.message||err)});
   }
-
-  const techName = document.getElementById('tech-name').value.trim() || '미입력';
-  const techYear = parseInt(document.getElementById('tech-year').value) || 2024;
-
-  btn.disabled = true;
-  btnText.textContent = '분석 중...';
-  showLoading();
-
-  const startTime = Date.now();
-
-  try {
-    const result = await callClaudeAPI(inputText, techName, techYear);
-    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-    document.getElementById('result-time').textContent = `${elapsed}초 소요`;
-    showResult(result);
-  } catch(e) {
-    showError(e.message);
-  } finally {
-    btn.disabled = false;
-    btnText.textContent = '⚡ TRL 판정 실행';
-  }
+  renderTRLResult();
 }
-
-// ── Claude API 호출 ──────────────────────────────
-async function callClaudeAPI(text, techName, year) {
-  const prompt = `당신은 R&D 기술성숙도(TRL) 평가 전문가입니다.
-다음 기술 설명을 분석하여 TRL을 3단계로 판정하세요.
-
-기술명: ${techName}
-연도: ${year}
-
-기술 설명:
-${text.substring(0, 3000)}
-
-다음 JSON 형식으로만 응답하세요 (다른 텍스트 없이):
-{
-  "level": "Low" 또는 "Mid" 또는 "High",
-  "trl_range": "TRL X~X",
-  "confidence": 0.0~1.0 사이 숫자,
-  "uncertainty": "stable" 또는 "caution" 또는 "review",
-  "prob_low": 0.0~1.0,
-  "prob_mid": 0.0~1.0,
-  "prob_high": 0.0~1.0,
-  "summary": "핵심 내용 2문장 요약",
-  "evidence_positive": ["긍정 근거1", "긍정 근거2"],
-  "evidence_negative": ["부정/한계 근거1"],
-  "evidence_neutral": ["중립 정보1"],
-  "reasoning": "판정 근거 설명 (2~3문장)"
+function normalizeApiTRL(data,input,endpoint){
+  const cls=data.predicted_class || data.final_class || data.label || 'Mid';
+  const proba=data.class_proba || data.proba || {Low:0.2,Mid:0.6,High:0.2};
+  const confidence=Number(data.confidence ?? Math.max(proba.Low||0,proba.Mid||0,proba.High||0));
+  const start=data.start_trl || parseTRL(combinedText(input),'start') || '-';
+  const target=data.target_end_trl || data.target_trl || parseTRL(combinedText(input),'target') || '-';
+  const label=data.predicted_label || classToLabel(cls);
+  return {engine:'backend_model_api',fallback_used:false,api_tried:true,api_endpoint:endpoint,model_name:data.model_name||$('modelVersion').value||'unknown',model_version:data.model_version||$('modelVersion').value||'unknown',predicted_class:cls,final_label:label,confidence:confidence,class_proba:{Low:Number(proba.Low||0),Mid:Number(proba.Mid||0),High:Number(proba.High||0)},estimated_trl:data.estimated_trl||null,start_trl:start,target_end_trl:target,evidence:data.evidence_sentences||data.evidence||[],flags:data.flags||[],runs:data.runs||[],status:confidence>=.75?'stable':confidence>=.55?'caution':'review',statusText:confidence>=.75?'안정 판정':confidence>=.55?'검토 권장':'전문가 검토 필요'};
 }
+function classToLabel(c){return c==='Low'?'Low · TRL 1-3':c==='High'?'High · TRL 7-9':'Mid · TRL 4-6'}
 
-판정 기준:
-- Low (TRL 2~3): 기초연구, 개념설계, 이론적 타당성 검토 단계
-- Mid (TRL 4~6): 연구실/파일럿 규모 검증, 시제품 개발, 유사환경 테스트 단계
-- High (TRL 7~9): 실제 운영환경 검증, 시스템 인증 완료, 사업화 단계
-
-confidence는 판정의 확신도입니다. 텍스트가 명확하면 높게, 모호하면 낮게 설정하세요.
-prob_low + prob_mid + prob_high = 1.0이 되어야 합니다.`;
-
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1000,
-      messages: [{ role: 'user', content: prompt }]
-    })
-  });
-
-  if (!response.ok) throw new Error(`API 오류: ${response.status}`);
-  const data = await response.json();
-  const raw  = data.content[0].text.trim();
-
-  // JSON 추출
-  const match = raw.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error('응답 파싱 실패');
-  return JSON.parse(match[0]);
+const TRL_DICT = {
+  Low:['기초원리','개념','문헌','아이디어','알고리즘 설계','모델링','시뮬레이션','proof of concept','poc','concept','basic principles','formulated'],
+  Mid:['실험실','시제품','프로토타입','검증','성능평가','테스트베드','통합시험','lab validation','prototype','breadboard','validation','demonstrated in relevant environment'],
+  High:['현장실증','실제환경','운용','납품','상용화','양산','인증','고객사 적용','조달','매출','operational environment','flight proven','actual system','commercialization']
+};
+function localTRLConsensus(input,meta={}){
+  const profiles=['balanced','conservative','validation'];
+  const runs=profiles.map((p,i)=>localTRLRun(input,p,i+1));
+  const avg={Low:0,Mid:0,High:0}; runs.forEach(r=>{avg.Low+=r.class_proba.Low/3;avg.Mid+=r.class_proba.Mid/3;avg.High+=r.class_proba.High/3});
+  let cls=Object.entries(avg).sort((a,b)=>b[1]-a[1])[0][0];
+  const text=combinedText(input); const flags=[];
+  const hasHighEvidence=/(현장실증|실제환경|운용|납품|상용화|양산|인증|고객사 적용|조달|매출|operational environment|actual system|commercialization)/i.test(text);
+  const planned=/(예정|목표|추진 예정|계획|향후|will|plan to|target)/i.test(text);
+  if(cls==='High' && !hasHighEvidence){cls='Mid';avg.Mid=Math.max(avg.Mid,0.62);avg.High=Math.min(avg.High,0.30);flags.push('High 판정을 위한 실제 환경 실증·운용·납품·상용화 근거가 부족해 Mid로 보수 조정');}
+  if(planned && !hasHighEvidence){flags.push('목표/예정 표현이 포함되어 완료된 검증 근거와 구분 필요');}
+  const start=parseTRL(text,'start')||'-'; const target=parseTRL(text,'target')||parseTRL(text,'any')||'-';
+  const confidence=Math.max(avg.Low,avg.Mid,avg.High);
+  const evidence=extractEvidence(text,cls);
+  return {engine:'local_evidence_guardrail',fallback_used:!!meta.fallbackUsed,api_tried:!!meta.apiTried,api_error:meta.error||null,api_endpoint:$('apiEndpoint')?.value||'',model_name:'Local Rule-based Evidence Guardrail',model_version:APP_VERSION,predicted_class:cls,final_label:classToLabel(cls),confidence, class_proba:avg, estimated_trl:estimateTRL(cls,text), start_trl:start, target_end_trl:target, evidence, flags, runs, status:confidence>=.75?'stable':confidence>=.55?'caution':'review', statusText:confidence>=.75?'안정 판정':confidence>=.55?'검토 권장':'전문가 검토 필요'};
 }
-
-// ── 로딩 표시 ─────────────────────────────────────
-function showLoading() {
-  document.getElementById('result-content').innerHTML = `
-    <div class="loading">
-      <div class="spinner"></div>
-      <div class="loading-text">AI가 기술 내용을 분석하고 있습니다</div>
-      <div class="loading-step" id="loading-step">핵심 섹션 추출 중...</div>
-    </div>`;
-
-  const steps = ['핵심 섹션 추출 중...', '기술 수준 분석 중...', '신뢰도 계산 중...', '결과 정량화 중...'];
-  let i = 0;
-  window._loadingInterval = setInterval(() => {
-    i = (i+1) % steps.length;
-    const el = document.getElementById('loading-step');
-    if (el) el.textContent = steps[i];
-  }, 900);
+function localTRLRun(input,profile,runIndex){
+  const text=combinedText(input); const tl=text.toLowerCase();
+  let score={Low:.18,Mid:.20,High:.12};
+  for(const [cls,words] of Object.entries(TRL_DICT)){words.forEach(w=>{if(tl.includes(w.toLowerCase()))score[cls]+= cls==='Low'?.10:cls==='Mid'?.13:.16;});}
+  const explicit=parseTRL(text,'any'); if(explicit){if(explicit<=3)score.Low+=.35;else if(explicit<=6)score.Mid+=.35;else score.High+=.35;}
+  const planned=/(예정|목표|추진 예정|계획|향후|will|plan to|target)/i.test(text);
+  const completed=/(완료|하였다|했다|구현|검증하였다|실증하였다|입증|확인|적용|운용|납품|상용화|인증)/i.test(text);
+  if(profile==='conservative'){score.High*=.82;if(planned&&!completed)score.High*=.55;}
+  if(profile==='validation'){if(/검증|실증|테스트|인증|시제품|프로토타입|운용|납품/.test(text))score.Mid+=.10;if(/현장실증|운용|상용화|납품|양산|조달/.test(text))score.High+=.16;}
+  if(input.strictMode==='strict'){score.High*=.86;score.Low+=.03;} if(input.strictMode==='exploratory'){score.High*=1.08;score.Mid*=1.04;}
+  const sum=score.Low+score.Mid+score.High; const proba={Low:score.Low/sum,Mid:score.Mid/sum,High:score.High/sum}; const cls=Object.entries(proba).sort((a,b)=>b[1]-a[1])[0][0];
+  return {run:runIndex,profile,predicted_class:cls,class_proba:proba,confidence:proba[cls]};
 }
-
-// ── 결과 표시 ─────────────────────────────────────
-function showResult(r) {
-  clearInterval(window._loadingInterval);
-
-  const badgeClass  = { Low:'badge-low', Mid:'badge-mid', High:'badge-high' }[r.level] || 'badge-mid';
-  const levelColor  = { Low:'var(--green)', Mid:'var(--amber)', High:'var(--blue)' }[r.level] || 'var(--amber)';
-  const levelEmoji  = { Low:'🔬', Mid:'🧪', High:'🚀' }[r.level] || '🧪';
-
-  const confPct   = Math.round(r.confidence * 100);
-  const needsReview = r.confidence < 0.60 || r.uncertainty === 'review';
-
-  const uncClass = { stable:'unc-stable', caution:'unc-caution', review:'unc-review' }[r.uncertainty] || 'unc-caution';
-  const uncLabel = { stable:'안정 · 높은 신뢰도', caution:'주의 · 중간 신뢰도', review:'재검토 필요' }[r.uncertainty] || '주의';
-  const uncIcon  = { stable:'🟢', caution:'🟡', review:'🔴' }[r.uncertainty] || '🟡';
-
-  const probLow  = Math.round((r.prob_low  || 0) * 100);
-  const probMid  = Math.round((r.prob_mid  || 0) * 100);
-  const probHigh = Math.round((r.prob_high || 0) * 100);
-
-  const posEvidence = (r.evidence_positive || []).map(e =>
-    `<div class="ev-item ev-positive"><div class="ev-icon">✅</div><div class="ev-text">${e}</div></div>`).join('');
-  const negEvidence = (r.evidence_negative || []).map(e =>
-    `<div class="ev-item ev-negative"><div class="ev-icon">⚠️</div><div class="ev-text">${e}</div></div>`).join('');
-  const neuEvidence = (r.evidence_neutral  || []).map(e =>
-    `<div class="ev-item ev-neutral"><div class="ev-icon">ℹ️</div><div class="ev-text">${e}</div></div>`).join('');
-
-  const reviewAlert = needsReview ? `
-    <div class="review-alert">
-      <div class="review-alert-icon">🔴</div>
-      <div>
-        <div class="review-alert-title">전문가 검토 권고</div>
-        <div class="review-alert-desc">신뢰도 ${confPct}% — 텍스트 정보가 충분하지 않거나 판정 경계에 해당합니다. 추가 정보 입력 또는 전문가 확인을 권장합니다.</div>
-      </div>
-    </div>` : '';
-
-  document.getElementById('result-content').innerHTML = `
-    <div class="trl-result fade-in">
-
-      ${reviewAlert}
-
-      <div class="trl-badge-wrap">
-        <div class="trl-badge ${badgeClass}">
-          <span style="font-size:1.4rem;">${levelEmoji}</span>
-          <span class="trl-badge-level">${r.level}</span>
-          <span class="trl-badge-label">${r.trl_range || ''}</span>
-        </div>
-      </div>
-
-      <div class="summary-box">
-        <div class="sb-header">AI 핵심 추출</div>
-        <div class="sb-content">${r.summary || ''}</div>
-      </div>
-
-      <div class="confidence-section">
-        <div class="conf-title">클래스별 확률 분포</div>
-        <div class="conf-row">
-          <span class="conf-label" style="color:var(--green);">Low</span>
-          <div class="conf-bar-track"><div class="conf-bar-fill bar-low" style="width:${probLow}%"></div></div>
-          <span class="conf-pct">${probLow}%</span>
-        </div>
-        <div class="conf-row">
-          <span class="conf-label" style="color:var(--amber);">Mid</span>
-          <div class="conf-bar-track"><div class="conf-bar-fill bar-mid" style="width:${probMid}%"></div></div>
-          <span class="conf-pct">${probMid}%</span>
-        </div>
-        <div class="conf-row">
-          <span class="conf-label" style="color:var(--blue);">High</span>
-          <div class="conf-bar-track"><div class="conf-bar-fill bar-high" style="width:${probHigh}%"></div></div>
-          <span class="conf-pct">${probHigh}%</span>
-        </div>
-      </div>
-
-      <div class="metrics-grid">
-        <div class="metric-card">
-          <div class="metric-name">신뢰도</div>
-          <div class="metric-val" style="color:${levelColor}">${confPct}%</div>
-          <div class="metric-sub">Confidence Score</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-name">불확실성</div>
-          <div class="metric-val">${uncIcon}</div>
-          <div class="metric-sub">${uncLabel}</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-name">판정 레벨</div>
-          <div class="metric-val" style="color:${levelColor}">${r.level}</div>
-          <div class="metric-sub">${r.trl_range || ''}</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-name">검토 필요</div>
-          <div class="metric-val">${needsReview ? '🔴' : '🟢'}</div>
-          <div class="metric-sub">${needsReview ? '전문가 확인' : '자동 판정 가능'}</div>
-        </div>
-      </div>
-
-      <div class="uncertainty-box ${uncClass}">
-        <div class="ub-header">
-          <span class="ub-title">불확실성 평가</span>
-          <span class="ub-value">${uncIcon} ${uncLabel}</span>
-        </div>
-        <div class="ub-desc">${r.reasoning || '판정 근거 없음'}</div>
-      </div>
-
-      <div class="evidence-section">
-        <div class="ev-title">정량적 근거 분석</div>
-        ${posEvidence}${negEvidence}${neuEvidence}
-      </div>
-
-    </div>`;
+function parseTRL(text,mode){
+  const patterns=mode==='start'?[/start\s*trl\s*[:=]?\s*(\d)/i,/시작\s*trl\s*[:=]?\s*(\d)/i,/착수\s*trl\s*[:=]?\s*(\d)/i]:mode==='target'?[/target\s*trl\s*[:=]?\s*(\d)/i,/end\s*trl\s*[:=]?\s*(\d)/i,/목표\s*trl\s*[:=]?\s*(\d)/i,/종료\s*trl\s*[:=]?\s*(\d)/i]:[/trl\s*[-:]?\s*(\d)/i,/TRL\s*(\d)/,/기술성숙도\s*(\d)/];
+  for(const p of patterns){const m=text.match(p);if(m){const n=Number(m[1]);if(n>=1&&n<=9)return n;}}
+  return null;
 }
+function estimateTRL(cls,text){const explicit=parseTRL(text,'any'); if(explicit)return explicit; if(cls==='Low')return /poc|개념 증명|시뮬레이션/i.test(text)?3:2; if(cls==='High')return /상용화|운용|납품|양산|매출/i.test(text)?8:7; return /현장|테스트베드|관련 환경/i.test(text)?6:5;}
+function extractEvidence(text,cls){const sentences=text.split(/(?<=[.!?。]|다\.|요\.)\s+|\n+/).map(s=>s.trim()).filter(Boolean); const keys=TRL_DICT[cls]||[]; let ev=sentences.filter(s=>keys.some(k=>s.toLowerCase().includes(k.toLowerCase()))); if(!ev.length)ev=sentences.filter(s=>/검증|실증|시제품|개념|운용|상용화|테스트|prototype|validation/i.test(s)); return ev.slice(0,5);}
+function renderTRLResult(){const r=STATE.trl;if(!r)return;const apiPill=r.engine==='backend_model_api'?'<span class="pill api">Backend API</span>':r.fallback_used?'<span class="pill caution">Local Fallback</span>':'<span class="pill review">Local Only</span>';const bars=['Low','Mid','High'].map(k=>`<div class="prob"><div class="prob-top"><span>${k}</span><span>${pct(r.class_proba[k])}%</span></div><div class="bar ${k.toLowerCase()}"><span style="width:${pct(r.class_proba[k])}%"></span></div></div>`).join('');const flags=(r.flags&&r.flags.length?r.flags:['특이 플래그 없음']).map(f=>`<div class="flag ${r.flags&&r.flags.length?'amber':'green'}">${escapeHtml(f)}</div>`).join('');const ev=(r.evidence&&r.evidence.length?r.evidence:['근거 문장이 충분하지 않습니다. 입력문에 검증·실증·상용화 근거를 더 명시하세요.']).map((e,i)=>`<div class="evidence"><span class="tag">Evidence ${i+1}</span><p>${escapeHtml(e)}</p></div>`).join('');$('trlResult').innerHTML=`<div class="label-card"><div class="final-label">${escapeHtml(r.final_label)}</div>${apiPill} <span class="pill ${r.status}">${escapeHtml(r.statusText)} · ${pct(r.confidence)}%</span></div><div class="mini"><div><b>Start TRL</b><br>${escapeHtml(r.start_trl)}</div><div><b>Target/End</b><br>${escapeHtml(r.target_end_trl)}</div><div><b>Estimated TRL</b><br>${escapeHtml(r.estimated_trl||'-')}</div></div><div class="section-title">Low/Mid/High 확률</div>${bars}<div class="section-title">판정 엔진</div><div class="flag">${escapeHtml(r.engine)} · ${escapeHtml(r.model_name||'-')}</div>${r.api_error?`<div class="flag red">API 오류: ${escapeHtml(r.api_error)}</div>`:''}<div class="section-title">검토 플래그</div>${flags}<div class="section-title">근거 문장</div>${ev}<details><summary>TRL 상세 JSON</summary><div class="detail-body"><pre class="jsonbox">${escapeHtml(JSON.stringify(r,null,2))}</pre></div></details>`;}
 
-function showError(msg) {
-  clearInterval(window._loadingInterval);
-  document.getElementById('result-content').innerHTML = `
-    <div class="result-placeholder">
-      <span class="icon">❌</span>
-      오류가 발생했습니다<br>
-      <span style="font-size:.75rem;color:var(--red);">${msg}</span><br><br>
-      <span style="font-size:.75rem;">API 키를 확인하거나 잠시 후 다시 시도하세요.</span>
-    </div>`;
+function tokenize(text){return Array.from(new Set((text.toLowerCase().match(/[가-힣a-zA-Z0-9]+/g)||[]).filter(x=>x.length>1&&!STOPWORDS.has(x))));}
+const STOPWORDS=new Set(['기술','개발','연구','과제','사업','시스템','기반','활용','적용','구축','플랫폼','서비스','기능','성능','개선','분석','및','또는','위한','통한','관련','기타','자동','고도화','산업','공공','분야','환경','단계','제품','문제','방법','결과','데이터','소프트웨어','system','model','method']);
+function jaccard(a,b){const A=new Set(a),B=new Set(b);let inter=0;A.forEach(x=>{if(B.has(x))inter++});return inter/(A.size+B.size-inter||1)}
+function scoreItem(text,item,profile,schemeKey){const tl=text.toLowerCase();let exact=0,tokenHit=0,sem=0,boost=0;const hay=[item.name,item.full,item.code,...(item.keywords||[])].join(' ').toLowerCase();if(tl.includes(item.name.toLowerCase()))exact+=1.2;if(tl.includes(item.code.toLowerCase()))exact+=.4;(item.keywords||[]).forEach(k=>{if(tl.includes(k.toLowerCase()))tokenHit+=1;});sem=jaccard(tokenize(text),tokenize(hay));if(profile==='keyword'){exact*=1.25;tokenHit*=1.18;}if(profile==='semantic'){sem*=1.45;}if(profile==='hybrid'){exact*=1.05;sem*=1.15;}
+  // 경계 보정: 교통 CCTV 관제는 UAM보다 도로교통/ITS 쪽을 우선 보정
+  if(/교차로|도로|CCTV|관제|돌발상황|보행자|차량/.test(text) && /도로교통|교통\/물류|지능형교통/.test(item.full)) boost+=2.2;
+  if(/교차로|도로|CCTV|관제|돌발상황/.test(text) && /첨단모빌리티|미래차/.test(item.full)) boost-=.35;
+  if(/LLM|VLM|인공지능|AI|딥러닝|머신러닝|영상분석/i.test(text) && /인공지능|AI/.test(item.full)) boost+=1.4;
+  if(/반도체|NPU|SoC|온디바이스|가속기/i.test(text) && /반도체/.test(item.full)) boost+=1.8;
+  if(/의료|환자|EMR|임상|헬스케어|신약|바이오/i.test(text) && /바이오|의료|헬스/.test(item.full)) boost+=1.8;
+  if(/에너지|온실가스|탄소|수소|환경/i.test(text) && /에너지|환경|수소/.test(item.full)) boost+=1.7;
+  return exact*4 + tokenHit*1.35 + sem*8 + boost + (item.level===2?.2:0);
 }
+function runClassificationConsensus(){const input=getInput();const text=combinedText(input);if(text.length<80){alert('기술정보가 너무 짧습니다. 최소 80자 이상 입력하세요.');return;}STATE.input=input;const mode=input.classificationMode;const profiles=mode==='keyword'?['keyword','keyword','hybrid']:mode==='semantic'?['semantic','semantic','hybrid']:['keyword','semantic','hybrid'];const final={};const runs=[];for(const [key,scheme] of Object.entries(TAXONOMIES)){const runRes=profiles.map((profile,idx)=>{const ranked=scheme.items.map(it=>({...it,score:scoreItem(text,it,profile,key)})).sort((a,b)=>b.score-a.score).slice(0,5);return {run:idx+1,profile,top:ranked};});runs.push({scheme:key,runs:runRes});const agg={};runRes.forEach((r,ri)=>r.top.forEach((x,rank)=>{const id=x.code;if(!agg[id])agg[id]={...x,votes:0,agg:0};agg[id].votes += rank<3?1:0;agg[id].agg += x.score*(1+ri*.05)*(1/(rank+1));}));const ranked=Object.values(agg).sort((a,b)=>b.votes-a.votes||b.agg-a.agg);const top=ranked.slice(0,scheme.topN).map((x,i)=>({...x,weight:calcWeight(x,ranked,scheme.topN,i)}));const boundary=ranked[1] && (ranked[0].agg-ranked[1].agg)/Math.max(ranked[0].agg,1)<.15;const flags=[];if(boundary)flags.push('1위와 2위 점수 차이가 작아 경계 사례 검토 필요');if(key==='strategic' && /교통|교차로|도로|CCTV|관제/.test(text) && /인공지능|AI|VLM|LLM|영상분석/.test(text))flags.push('AI 기술과 교통 적용분야가 결합된 과제입니다. 국가전략기술은 인공지능/첨단모빌리티 경계를 검토하세요.');final[key]={scheme,top,alternatives:ranked.slice(0,5),flags};}
+STATE.classification={engine:'local_taxonomy_consensus',mode,profiles,final,runs,generated_at:new Date().toISOString()};renderClassificationResult();}
+function calcWeight(x,ranked,topN,i){const total=ranked.slice(0,topN).reduce((s,a)=>s+a.agg,0)||1;return Math.round((x.agg/total)*1000)/10;}
+function renderClassificationResult(){const c=STATE.classification;if(!c)return;let html='';for(const [key,b] of Object.entries(c.final)){html+=`<div class="card"><h3>${escapeHtml(b.scheme.title)}</h3>${b.top.map((x,i)=>`<div class="class-row"><div class="class-rank">#${i+1}</div><div><div class="class-name">${escapeHtml(x.full)}</div><div class="class-code">${escapeHtml(x.code)} · votes ${x.votes} · score ${Number(x.agg).toFixed(2)}</div></div><div class="class-score">${x.weight}%</div></div>`).join('')}${(b.flags||[]).map(f=>`<div class="flag amber">${escapeHtml(f)}</div>`).join('')}<details><summary>대안 후보 보기</summary><div class="detail-body"><table><thead><tr><th>#</th><th>분류명</th><th>코드</th><th>점수</th></tr></thead><tbody>${b.alternatives.map((x,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(x.full)}</td><td>${escapeHtml(x.code)}</td><td>${Number(x.agg).toFixed(2)}</td></tr>`).join('')}</tbody></table></div></details></div>`;}html+=`<details><summary>3회 기술분류 상세 JSON</summary><div class="detail-body"><pre class="jsonbox">${escapeHtml(JSON.stringify(c,null,2))}</pre></div></details>`;$('classResult').innerHTML=html;}
+
+function buildOutput(){return {frontend_version:APP_VERSION,input:getInput(),trl:STATE.trl,classification:STATE.classification,human_review:{corrected_trl:$('humanTRL').value||null,note:$('humanNote').value||null},generated_at:new Date().toISOString()};}
+function renderSummary(){const input=getInput(),trl=STATE.trl,cls=STATE.classification;if(!trl||!cls){$('summaryResult').innerHTML='<div class="empty"><b>결과 부족</b>TRL 판정과 기술분류를 모두 실행하세요.</div>';return;}const rows=Object.entries(cls.final).map(([key,b])=>`<tr><td>${escapeHtml(b.scheme.title)}</td><td>${b.top.map(x=>escapeHtml(x.full)).join('<br>')}</td><td>${b.top.map(x=>escapeHtml(x.code)).join('<br>')}</td><td>${b.top.map(x=>x.weight+'%').join('<br>')}</td></tr>`).join('');$('summaryResult').innerHTML=`<div class="label-card"><div class="final-label">${escapeHtml(trl.final_label)}</div><span class="pill ${trl.status}">${escapeHtml(trl.statusText)} · ${pct(trl.confidence)}%</span> <span class="pill ${trl.engine==='backend_model_api'?'api':trl.fallback_used?'caution':'review'}">${escapeHtml(trl.engine)}</span></div><div class="mini"><div><b>기술명</b><br>${escapeHtml(input.techName||'-')}</div><div><b>Start TRL</b><br>${escapeHtml(trl.start_trl)}</div><div><b>Target/End</b><br>${escapeHtml(trl.target_end_trl)}</div></div><div class="section-title">기술분류 요약</div><table><thead><tr><th>분류체계</th><th>분류명</th><th>코드</th><th>가중치</th></tr></thead><tbody>${rows}</tbody></table><details><summary>통합 JSON 보기</summary><div class="detail-body"><pre class="jsonbox">${escapeHtml(JSON.stringify(buildOutput(),null,2))}</pre></div></details>`;}
+function downloadJSON(){const data=JSON.stringify(buildOutput(),null,2);downloadBlob(data,`kotrl_v4_result_${dateStr()}.json`,'application/json');}
+function csvCell(v){return '"'+String(v??'').replace(/"/g,'""').replace(/\n/g,' ')+'"';}
+function downloadCSV(){if(!STATE.trl||!STATE.classification){alert('TRL과 기술분류를 먼저 실행하세요.');return;}const out=buildOutput();const lines=[];lines.push(['구분','항목','값1','값2','값3'].map(csvCell).join(','));lines.push(['기술정보','기술명',out.input.techName,'',''].map(csvCell).join(','));lines.push(['TRL','최종판정',out.trl.final_label,out.trl.engine,out.trl.confidence].map(csvCell).join(','));lines.push(['TRL','확률',`Low ${out.trl.class_proba.Low}`,`Mid ${out.trl.class_proba.Mid}`,`High ${out.trl.class_proba.High}`].map(csvCell).join(','));for(const [key,b] of Object.entries(out.classification.final)){b.top.forEach((x,i)=>lines.push(['기술분류',b.scheme.title,x.full,x.code,x.weight+'%'].map(csvCell).join(',')));}downloadBlob('\ufeff'+lines.join('\n'),`kotrl_v4_result_${dateStr()}.csv`,'text/csv;charset=utf-8');}
+function saveFeedback(){const data=buildOutput();const arr=JSON.parse(localStorage.getItem('kotrl_feedback')||'[]');arr.push(data);localStorage.setItem('kotrl_feedback',JSON.stringify(arr));alert(`피드백 저장 완료: 총 ${arr.length}건`);}
+function downloadFeedbackCSV(){const arr=JSON.parse(localStorage.getItem('kotrl_feedback')||'[]');if(!arr.length){alert('저장된 피드백이 없습니다.');return;}const lines=[];lines.push(['timestamp','tech_name','predicted_class','confidence','human_trl','note','engine'].map(csvCell).join(','));arr.forEach(x=>lines.push([x.generated_at,x.input?.techName,x.trl?.predicted_class,x.trl?.confidence,x.human_review?.corrected_trl,x.human_review?.note,x.trl?.engine].map(csvCell).join(',')));downloadBlob('\ufeff'+lines.join('\n'),`kotrl_feedback_${dateStr()}.csv`,'text/csv;charset=utf-8');}
+function downloadBlob(data,filename,type){const blob=new Blob([data],{type});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),500);}
+function dateStr(){return new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}
+
+renderQuality(); refreshPreview();
+window.__KoTRL={APP_VERSION,TAXONOMIES,runTRLModelAPI,runClassificationConsensus,localTRLConsensus,buildOutput};
 </script>
 </body>
 </html>
